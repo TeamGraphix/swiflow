@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import networkx as nx
 import pytest
-from fastflow import gflow
-from fastflow.common import Plane
+from swiflow import gflow
+from swiflow.common import Plane
 
 from tests.assets import CASES, FlowTestCase
 

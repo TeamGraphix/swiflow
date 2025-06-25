@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from fastflow import flow
+from swiflow import flow
 
 from tests.assets import CASES, FlowTestCase
 

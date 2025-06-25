@@ -3,7 +3,7 @@ requires = ["maturin>=1,<2"]
 build-backend = "maturin"
 
 [project]
-name = "fastflow"
+name = "swiflow"
 # Must be consistent with Cargo.toml
 version = "0.1.0"
 description = "Rust binding of generalized and pauli flow finding algorithms."
@@ -59,7 +59,7 @@ exclude = [
   ".gitignore",
 ]
 features = ["pyo3/extension-module"]
-module-name = "fastflow._impl"
+module-name = "swiflow._impl"
 python-source = "python"
 
 [tool.mypy]

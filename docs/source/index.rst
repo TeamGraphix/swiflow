@@ -1,8 +1,8 @@
-fastflow documentation
+swiflow documentation
 ======================
 
 .. toctree::
    :maxdepth: 2
    :caption: API Reference:
 
-   fastflow
+   swiflow

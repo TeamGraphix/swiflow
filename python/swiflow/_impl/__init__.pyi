@@ -1,5 +1,5 @@
-from fastflow._impl.gflow import Plane
-from fastflow._impl.pflow import PPlane
+from swiflow._impl.gflow import Plane
+from swiflow._impl.pflow import PPlane
 
 class FlowValidationMessage:
     class ExcessiveNonZeroLayer:

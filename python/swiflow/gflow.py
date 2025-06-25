@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastflow import _common
-from fastflow._common import IndexMap
-from fastflow._impl import gflow as gflow_bind
-from fastflow.common import GFlowResult, Plane, V
+from swiflow import _common
+from swiflow._common import IndexMap
+from swiflow._impl import gflow as gflow_bind
+from swiflow.common import GFlowResult, Plane, V
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

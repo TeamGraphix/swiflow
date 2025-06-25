@@ -5,7 +5,7 @@ from __future__ import annotations
 import dataclasses
 
 import networkx as nx
-from fastflow.common import FlowResult, GFlowResult, Plane, PPlane
+from swiflow.common import FlowResult, GFlowResult, Plane, PPlane
 
 
 @dataclasses.dataclass(frozen=True)

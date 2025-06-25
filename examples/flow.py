@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import networkx as nx
-from fastflow import flow
+from swiflow import flow
 
 g: nx.Graph[int]
 

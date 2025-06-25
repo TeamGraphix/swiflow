@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import networkx as nx
 import pytest
-from fastflow import _common
-from fastflow._common import IndexMap
-from fastflow._impl import FlowValidationMessage
-from fastflow.common import Plane, PPlane
+from swiflow import _common
+from swiflow._common import IndexMap
+from swiflow._impl import FlowValidationMessage
+from swiflow.common import Plane, PPlane
 from typing_extensions import Never
 
 

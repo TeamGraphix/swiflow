@@ -1,14 +1,14 @@
-fastflow package
+swiflow package
 ================
 
-fastflow.common module
+swiflow.common module
 ----------------------
 
-.. automodule:: fastflow.common
+.. automodule:: swiflow.common
    :members:
    :exclude-members: Plane, PPlane, V, P
 
-   .. autoclass:: fastflow.common.Plane
+   .. autoclass:: swiflow.common.Plane
 
       .. py:attribute:: XY
 
@@ -22,7 +22,7 @@ fastflow.common module
 
          Arbitrary-angle measurement on the XZ plane.
 
-   .. autoclass:: fastflow.common.PPlane
+   .. autoclass:: swiflow.common.PPlane
 
       .. py:attribute:: XY
 
@@ -48,24 +48,24 @@ fastflow.common module
 
          Pauli-Z measurement.
 
-fastflow.flow module
+swiflow.flow module
 --------------------
 
-.. automodule:: fastflow.flow
+.. automodule:: swiflow.flow
    :members:
    :undoc-members:
 
-fastflow.gflow module
+swiflow.gflow module
 ---------------------
 
-.. automodule:: fastflow.gflow
+.. automodule:: swiflow.gflow
    :members:
    :undoc-members:
 
-fastflow.pflow module
+swiflow.pflow module
 ---------------------
 
-.. automodule:: fastflow.pflow
+.. automodule:: swiflow.pflow
    :members:
    :undoc-members:
 
