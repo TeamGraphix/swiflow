@@ -34,7 +34,7 @@ classifiers = [
   "Typing :: Typed",
 ]
 requires-python = ">=3.9,<3.14"
-dependencies = ["networkx"]
+dependencies = ["networkx", "typing-extensions"]
 
 [project.optional-dependencies]
 dev = [
