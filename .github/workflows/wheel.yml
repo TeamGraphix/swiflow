@@ -199,7 +199,7 @@ jobs:
           MATURIN_PYPI_TOKEN: ${{ secrets.TESTPYPI_API_TOKEN }}
         with:
           command: upload
-          args: --non-interactive --skip-existing wheels-*/* --repository testpypi
+          args: --repository=testpypi --non-interactive --skip-existing wheels-*/*
 
     #  - name: Publish to PyPI
     #    if: ${{ startsWith(github.ref, 'refs/tags/') }}
