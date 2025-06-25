@@ -5,7 +5,7 @@ build-backend = "maturin"
 [project]
 name = "swiflow"
 # Must be consistent with Cargo.toml
-version = "0.1.0"
+version = "0.0.1"
 description = "Rust binding of generalized and pauli flow finding algorithms."
 license-files = ["LICENSE"]
 readme = "README.md"
