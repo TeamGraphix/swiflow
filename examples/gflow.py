@@ -5,8 +5,8 @@
 from __future__ import annotations
 
 import networkx as nx
-from fastflow import gflow
-from fastflow.common import Plane
+from swiflow import gflow
+from swiflow.common import Plane
 
 g: nx.Graph[int]
 

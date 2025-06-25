@@ -1,8 +1,8 @@
 [package]
-name = "fastflow"
+name = "swiflow"
 description = "Rust binding of generalized and pauli flow finding algorithms."
-homepage = "https://github.com/TeamGraphix/fastflow"
-repository = "https://github.com/TeamGraphix/fastflow"
+homepage = "https://github.com/TeamGraphix/swiflow"
+repository = "https://github.com/TeamGraphix/swiflow"
 # Must be consistent with pyproject.toml
 version = "0.1.0"
 authors = ["S.S <66886825+EarlMilktea@users.noreply.github.com>"]
@@ -12,7 +12,7 @@ readme = "README.md"
 keywords = ["mbqc", "quantum-computing", "quantum"]
 
 [lib]
-name = "fastflow"
+name = "swiflow"
 crate-type = ["cdylib"]
 
 [dependencies]

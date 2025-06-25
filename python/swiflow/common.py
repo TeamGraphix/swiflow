@@ -8,7 +8,7 @@ from typing import Generic, TypeVar
 
 from typing_extensions import ParamSpec
 
-from fastflow._impl import gflow, pflow
+from swiflow._impl import gflow, pflow
 
 Plane = gflow.Plane
 PPlane = pflow.PPlane

@@ -8,8 +8,8 @@ from typing import Generic
 
 import networkx as nx
 
-from fastflow._impl import FlowValidationMessage
-from fastflow.common import P, S, T, V
+from swiflow._impl import FlowValidationMessage
+from swiflow.common import P, S, T, V
 
 
 def check_graph(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> None:

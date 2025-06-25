@@ -11,11 +11,11 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-ROOT_DIR = Path("../../python/fastflow").resolve()
+ROOT_DIR = Path("../../python/swiflow").resolve()
 
 sys.path.insert(0, str(ROOT_DIR))
 
-project = "fastflow"
+project = "swiflow"
 copyright = "2024, TeamGraphix"  # noqa: A001
 author = "S.S."
 release = "0.1.0"

@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from fastflow import _common
-from fastflow._common import IndexMap
-from fastflow._impl import flow as flow_bind
-from fastflow.common import FlowResult, V
+from swiflow import _common
+from swiflow._common import IndexMap
+from swiflow._impl import flow as flow_bind
+from swiflow.common import FlowResult, V
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet

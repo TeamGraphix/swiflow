@@ -59,7 +59,7 @@ pub const FATAL_MSG: &str = "\
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Please report to the developers via GitHub:
-https://github.com/TeamGraphix/fastflow/issues/new";
+https://github.com/TeamGraphix/swiflow/issues/new";
 
 #[cfg(test)]
 mod tests {
