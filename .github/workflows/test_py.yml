@@ -35,5 +35,7 @@ jobs:
 
       - name: Run Python tests
         run: |
-          uv sync --extra dev
+          # Test with minimal dependencies
+          uv sync
+          uv pip install pytest
           uv run pytest
