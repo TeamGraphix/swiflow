@@ -18,7 +18,6 @@ sys.path.insert(0, str(ROOT_DIR))
 project = "swiflow"
 copyright = "2024, TeamGraphix"  # noqa: A001
 author = "S.S."
-release = "0.1.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
