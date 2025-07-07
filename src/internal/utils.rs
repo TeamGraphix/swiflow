@@ -153,7 +153,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::*;
-    use crate::internal::test_utils::{TestCase, CASE3};
+    use crate::internal::test_utils::{CASE3, TestCase};
 
     #[test]
     fn test_odd_neighbors() {

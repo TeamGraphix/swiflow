@@ -8,10 +8,11 @@ use pyo3::prelude::*;
 
 use crate::{
     common::{
+        FATAL_MSG,
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPlane, InvalidMeasurementSpec,
         },
-        Graph, Layer, Nodes, OrderedNodes, FATAL_MSG,
+        Graph, Layer, Nodes, OrderedNodes,
     },
     internal::{
         gf2_linalg::GF2Solver,

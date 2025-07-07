@@ -5,8 +5,9 @@ use pyo3::prelude::*;
 
 use crate::{
     common::{
+        FATAL_MSG,
         FlowValidationError::{self, InconsistentFlowOrder},
-        Graph, Layer, Nodes, FATAL_MSG,
+        Graph, Layer, Nodes,
     },
     internal::{utils::InPlaceSetDiff, validate},
 };
