@@ -2,6 +2,12 @@
 //!
 //! From the Python side, bindings are visible as `swiflow._impl.XXX`.
 #![warn(clippy::pedantic)]
+#![warn(
+    rust_2018_compatibility,
+    rust_2021_compatibility,
+    rust_2024_compatibility,
+    rust_2018_idioms
+)]
 
 #[macro_use]
 mod internal;
