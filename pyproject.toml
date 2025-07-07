@@ -51,7 +51,6 @@ doc = ["furo", "sphinxcontrib-bibtex", "sphinx"]
 
 [tool.maturin]
 exclude = [
-  "Pipfile",
   "docs/**",
   "examples/**",
   "rustfmt.toml",
