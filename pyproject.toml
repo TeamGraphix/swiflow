@@ -44,6 +44,7 @@ dev = [
   "pytest",
   "pytest-cov",
   "ruff",
+  "tomli",
   "types-networkx",
 ]
 doc = ["furo", "sphinxcontrib-bibtex", "sphinx"]
