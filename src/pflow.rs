@@ -8,10 +8,11 @@ use pyo3::prelude::*;
 
 use crate::{
     common::{
+        FATAL_MSG,
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPPlane, InvalidMeasurementSpec,
         },
-        Graph, Layer, Nodes, OrderedNodes, FATAL_MSG,
+        Graph, Layer, Nodes, OrderedNodes,
     },
     internal::{
         gf2_linalg::GF2Solver,
@@ -275,7 +276,7 @@ struct PFlowContext<'a> {
 
 /// Implements the branch-specific part of the algorithm.
 #[tracing::instrument]
-fn find_impl<const K: BranchKind>(ctx: &mut PFlowContext) -> bool {
+fn find_impl<const K: BranchKind>(ctx: &mut PFlowContext<'_>) -> bool {
     const {
         assert!(K == BRANCH_XY || K == BRANCH_YZ || K == BRANCH_XZ);
     };
