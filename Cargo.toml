@@ -21,7 +21,7 @@ hashbrown = "0.15"
 itertools = "0.14"
 pyo3 = { version = "0.25", features = ["abi3-py39", "hashbrown"] }
 thiserror = "2"
-tracing = "0.1"
+tracing = { version = "0.1", features = ["release_max_level_off"] }
 
 [dev-dependencies]
 rand = "0.9"
