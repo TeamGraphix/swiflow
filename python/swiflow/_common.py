@@ -80,6 +80,13 @@ def check_planelike(vset: AbstractSet[V], oset: AbstractSet[V], plike: Mapping[V
         raise ValueError(msg)
 
 
+def check_layer(layer: Mapping[V, int]) -> None:
+    """Check if layer range is compatible with the current implementation."""
+    if min(layer.values(), default=0) != 0:
+        msg = "Minimum layer must be 0."
+        raise ValueError(msg)
+
+
 class IndexMap(Generic[V]):
     """Map between `V` and 0-based indices."""
 

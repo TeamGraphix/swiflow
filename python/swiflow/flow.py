@@ -83,12 +83,14 @@ def verify(
         If the graph is invalid or verification fails.
     """
     _common.check_graph(g, iset, oset)
+    f, layer = flow
+    if ensure_optimal:
+        _common.check_layer(layer)
     vset = g.nodes
     codec = IndexMap(vset)
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    f, layer = flow
     f_ = codec.encode_flow(f)
     layer_ = codec.encode_layer(layer)
     codec.ecatch(flow_bind.verify, (f_, layer_), g_, iset_, oset_, ensure_optimal)

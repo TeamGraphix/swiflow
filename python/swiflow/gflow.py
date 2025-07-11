@@ -101,6 +101,9 @@ def verify(
         If the graph is invalid or verification fails.
     """
     _common.check_graph(g, iset, oset)
+    f, layer = gflow
+    if ensure_optimal:
+        _common.check_layer(layer)
     vset = g.nodes
     if plane is None:
         plane = dict.fromkeys(vset - oset, Plane.XY)
@@ -109,7 +112,6 @@ def verify(
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
     plane_ = codec.encode_dictkey(plane)
-    f, layer = gflow
     f_ = codec.encode_gflow(f)
     layer_ = codec.encode_layer(layer)
     codec.ecatch(gflow_bind.verify, (f_, layer_), g_, iset_, oset_, plane_, ensure_optimal)
