@@ -103,7 +103,7 @@ def verify(
         Measurement plane or Pauli index for each node in :math:`V \setminus O`.
         Defaults to `PPlane.XY`.
     ensure_optimal : `bool`
-        Wether the pflow should be maximally-delayed. Defaults to `False`.
+        Whether the pflow should be maximally-delayed. Defaults to `False`.
 
     Raises
     ------

@@ -95,7 +95,7 @@ def verify(
         Measurement plane for each node in :math:`V \setminus O`.
         Defaults to `Plane.XY`.
     ensure_optimal : `bool`
-        Wether the gflow should be maximally-delayed. Defaults to `False`.
+        Whether the gflow should be maximally-delayed. Defaults to `False`.
 
     Raises
     ------

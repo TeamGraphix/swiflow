@@ -78,7 +78,7 @@ def verify(
     oset : `collections.abc.Set`
         Output nodes.
     ensure_optimal : `bool`
-        Wether the flow should be maximally-delayed. Defaults to `False`.
+        Whether the flow should be maximally-delayed. Defaults to `False`.
 
     Raises
     ------
