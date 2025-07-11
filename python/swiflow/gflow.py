@@ -49,7 +49,7 @@ def find(
 
     Returns
     -------
-    `GFlowResult` or `None`
+    `tuple` of gflow/layer or `None`
         Return the gflow if any, otherwise `None`.
     """
     _common.check_graph(g, iset, oset)
@@ -83,7 +83,7 @@ def verify(
 
     Parameters
     ----------
-    gflow : `GFlowResult`
+    gflow : `tuple` of gflow/layer
         Generalized flow to verify.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.

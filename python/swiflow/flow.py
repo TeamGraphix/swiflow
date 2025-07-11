@@ -40,7 +40,7 @@ def find(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -> FlowR
 
     Returns
     -------
-    `FlowResult` or `None`
+    `tuple` of flow/layer or `None`
         Return the flow if any, otherwise `None`.
     """
     _common.check_graph(g, iset, oset)
@@ -69,7 +69,7 @@ def verify(
 
     Parameters
     ----------
-    flow : `FlowResult`
+    flow : `tuple` of flow/layer
         Flow to verify.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.

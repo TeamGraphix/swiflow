@@ -50,7 +50,7 @@ def find(
 
     Returns
     -------
-    `PFlowResult` or `None`
+    `tuple` of Pauli flow/layer or `None`
         Return the Pauli flow if any, otherwise `None`.
 
     Notes
@@ -91,7 +91,7 @@ def verify(
 
     Parameters
     ----------
-    pflow : `PFlowResult`
+    pflow : `tuple` of Pauli flow/layer
         Pauli flow to verify.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.
