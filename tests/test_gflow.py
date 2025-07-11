@@ -32,4 +32,4 @@ def test_infer_verify(c: FlowTestCase) -> None:
         pytest.skip()
     f, _ = c.gflow
     layer = common.infer_layer(c.g, f)
-    gflow.verify((f, layer), c.g, c.iset, c.oset)
+    gflow.verify((f, layer), c.g, c.iset, c.oset, plane=c.plane)
