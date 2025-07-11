@@ -56,6 +56,13 @@ def _infer_layer_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
 def infer_layer(g: nx.Graph[_V], anyflow: Mapping[_V, _V | AbstractSet[_V]]) -> Mapping[_V, int]:
     """Infer layer from flow/gflow.
 
+    Parameters
+    ----------
+    g : `networkx.Graph`
+        Simple graph representing MBQC pattern.
+    anyflow : `tuple` of flow-like/layer
+        Flow to verify. Compatible with both flow and generalized flow.
+
     Notes
     -----
     This function is based on greedy algorithm.
