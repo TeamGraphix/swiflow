@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import dataclasses
 from collections.abc import Hashable
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from typing_extensions import ParamSpec
 
@@ -18,24 +17,15 @@ V = TypeVar("V", bound=Hashable)
 P = TypeVar("P", Plane, PPlane)
 S = ParamSpec("S")
 
+Flow = dict[V, V]
+"""Flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
 
-@dataclasses.dataclass(frozen=True)
-class FlowResult(Generic[V]):
-    r"""Causal flow of an open graph."""
+GFlow = dict[V, set[V]]
+"""Generalized flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
 
-    f: dict[V, V]
-    """Flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
-    layer: dict[V, int]
-    r"""Layer of each node representing the partial order. :math:`layer(u) > layer(v)` implies :math:`u \prec v`.
-    """
+PFlow = dict[V, set[V]]
+"""Pauli flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
 
-
-@dataclasses.dataclass(frozen=True)
-class GFlowResult(Generic[V]):
-    r"""Generalized flow of an open graph."""
-
-    f: dict[V, set[V]]
-    """Generalized flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
-    layer: dict[V, int]
-    r"""Layer of each node representing the partial order. :math:`layer(u) > layer(v)` implies :math:`u \prec v`.
-    """
+Layer = dict[V, int]
+r"""Layer of each node representing the partial order. :math:`layer(u) > layer(v)` implies :math:`u \prec v`.
+"""

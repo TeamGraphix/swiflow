@@ -3,9 +3,15 @@
 from __future__ import annotations
 
 import dataclasses
+from typing import TYPE_CHECKING
 
 import networkx as nx
-from swiflow.common import FlowResult, GFlowResult, Plane, PPlane
+from swiflow.common import Plane, PPlane
+
+if TYPE_CHECKING:
+    from swiflow.flow import FlowResult
+    from swiflow.gflow import GFlowResult
+    from swiflow.pflow import PFlowResult
 
 
 @dataclasses.dataclass(frozen=True)
@@ -17,7 +23,7 @@ class FlowTestCase:
     pplane: dict[int, PPlane] | None
     flow: FlowResult[int] | None
     gflow: GFlowResult[int] | None
-    pflow: GFlowResult[int] | None
+    pflow: PFlowResult[int] | None
 
 
 # MEMO: DO NOT modify while testing
@@ -30,9 +36,9 @@ CASE0 = FlowTestCase(
     {1, 2},
     None,
     None,
-    FlowResult({}, {1: 0, 2: 0}),
-    GFlowResult({}, {1: 0, 2: 0}),
-    GFlowResult({}, {1: 0, 2: 0}),
+    ({}, {1: 0, 2: 0}),
+    ({}, {1: 0, 2: 0}),
+    ({}, {1: 0, 2: 0}),
 )
 
 # 1 - 2 - 3 - 4 - 5
@@ -42,9 +48,9 @@ CASE1 = FlowTestCase(
     {5},
     None,
     None,
-    FlowResult({1: 2, 2: 3, 3: 4, 4: 5}, {1: 4, 2: 3, 3: 2, 4: 1, 5: 0}),
-    GFlowResult({1: {2}, 2: {3}, 3: {4}, 4: {5}}, {1: 4, 2: 3, 3: 2, 4: 1, 5: 0}),
-    GFlowResult({1: {2}, 2: {3}, 3: {4}, 4: {5}}, {1: 4, 2: 3, 3: 2, 4: 1, 5: 0}),
+    ({1: 2, 2: 3, 3: 4, 4: 5}, {1: 4, 2: 3, 3: 2, 4: 1, 5: 0}),
+    ({1: {2}, 2: {3}, 3: {4}, 4: {5}}, {1: 4, 2: 3, 3: 2, 4: 1, 5: 0}),
+    ({1: {2}, 2: {3}, 3: {4}, 4: {5}}, {1: 4, 2: 3, 3: 2, 4: 1, 5: 0}),
 )
 
 
@@ -57,9 +63,9 @@ CASE2 = FlowTestCase(
     {5, 6},
     None,
     None,
-    FlowResult({3: 5, 4: 6, 1: 3, 2: 4}, {1: 2, 2: 2, 3: 1, 4: 1, 5: 0, 6: 0}),
-    GFlowResult({3: {5}, 4: {6}, 1: {3}, 2: {4}}, {1: 2, 2: 2, 3: 1, 4: 1, 5: 0, 6: 0}),
-    GFlowResult({3: {5}, 4: {6}, 1: {3}, 2: {4}}, {1: 2, 2: 2, 3: 1, 4: 1, 5: 0, 6: 0}),
+    ({3: 5, 4: 6, 1: 3, 2: 4}, {1: 2, 2: 2, 3: 1, 4: 1, 5: 0, 6: 0}),
+    ({3: {5}, 4: {6}, 1: {3}, 2: {4}}, {1: 2, 2: 2, 3: 1, 4: 1, 5: 0, 6: 0}),
+    ({3: {5}, 4: {6}, 1: {3}, 2: {4}}, {1: 2, 2: 2, 3: 1, 4: 1, 5: 0, 6: 0}),
 )
 
 #   ______
@@ -80,8 +86,8 @@ CASE3 = FlowTestCase(
     None,
     None,
     None,
-    GFlowResult({1: {5, 6}, 2: {4, 5, 6}, 3: {4, 6}}, {1: 1, 2: 1, 3: 1, 4: 0, 5: 0, 6: 0}),
-    GFlowResult({1: {5, 6}, 2: {4, 5, 6}, 3: {4, 6}}, {1: 1, 2: 1, 3: 1, 4: 0, 5: 0, 6: 0}),
+    ({1: {5, 6}, 2: {4, 5, 6}, 3: {4, 6}}, {1: 1, 2: 1, 3: 1, 4: 0, 5: 0, 6: 0}),
+    ({1: {5, 6}, 2: {4, 5, 6}, 3: {4, 6}}, {1: 1, 2: 1, 3: 1, 4: 0, 5: 0, 6: 0}),
 )
 
 #   0 - 1
@@ -96,8 +102,8 @@ CASE4 = FlowTestCase(
     {0: Plane.XY, 1: Plane.XY, 2: Plane.XZ, 3: Plane.YZ},
     {0: PPlane.XY, 1: PPlane.XY, 2: PPlane.XZ, 3: PPlane.YZ},
     None,
-    GFlowResult({0: {2}, 1: {5}, 2: {2, 4}, 3: {3}}, {0: 2, 1: 2, 2: 1, 3: 1, 4: 0, 5: 0}),
-    GFlowResult({0: {2}, 1: {5}, 2: {2, 4}, 3: {3}}, {0: 2, 1: 2, 2: 1, 3: 1, 4: 0, 5: 0}),
+    ({0: {2}, 1: {5}, 2: {2, 4}, 3: {3}}, {0: 2, 1: 2, 2: 1, 3: 1, 4: 0, 5: 0}),
+    ({0: {2}, 1: {5}, 2: {2, 4}, 3: {3}}, {0: 2, 1: 2, 2: 1, 3: 1, 4: 0, 5: 0}),
 )
 
 
@@ -130,7 +136,7 @@ CASE6 = FlowTestCase(
     {0: PPlane.XY, 1: PPlane.X, 2: PPlane.XY, 3: PPlane.X},
     None,
     None,
-    GFlowResult({0: {1}, 1: {4}, 2: {3}, 3: {2, 4}}, {0: 1, 1: 1, 2: 0, 3: 1, 4: 0}),
+    ({0: {1}, 1: {4}, 2: {3}, 3: {2, 4}}, {0: 1, 1: 1, 2: 0, 3: 1, 4: 0}),
 )
 
 # 1   2   3
@@ -144,7 +150,7 @@ CASE7 = FlowTestCase(
     {0: PPlane.Z, 1: PPlane.Z, 2: PPlane.Y, 3: PPlane.Y},
     None,
     None,
-    GFlowResult({0: {0}, 1: {1}, 2: {2}, 3: {4}}, {0: 1, 1: 0, 2: 0, 3: 1, 4: 0}),
+    ({0: {0}, 1: {1}, 2: {2}, 3: {4}}, {0: 1, 1: 0, 2: 0, 3: 1, 4: 0}),
 )
 
 # 0 - 1 -- 3
@@ -160,7 +166,7 @@ CASE8 = FlowTestCase(
     {0: PPlane.Z, 1: PPlane.XZ, 2: PPlane.Y},
     None,
     None,
-    GFlowResult({0: {0, 2, 4}, 1: {1, 2}, 2: {4}}, {0: 1, 1: 1, 2: 1, 3: 0, 4: 0}),
+    ({0: {0, 2, 4}, 1: {1, 2}, 2: {4}}, {0: 1, 1: 1, 2: 1, 3: 0, 4: 0}),
 )
 
 CASES: tuple[FlowTestCase, ...] = (CASE0, CASE1, CASE2, CASE3, CASE4, CASE5, CASE6, CASE7, CASE8)

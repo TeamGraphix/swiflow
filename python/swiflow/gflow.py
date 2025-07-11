@@ -11,13 +11,15 @@ from typing import TYPE_CHECKING
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import gflow as gflow_bind
-from swiflow.common import GFlowResult, Plane, V
+from swiflow.common import GFlow, Layer, Plane, V
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from collections.abc import Set as AbstractSet
 
     import networkx as nx
+
+GFlowResult = tuple[GFlow[V], Layer[V]]
 
 
 def find(
@@ -61,7 +63,7 @@ def find(
         f_, layer_ = ret_
         f = codec.decode_gflow(f_)
         layer = codec.decode_layer(layer_)
-        return GFlowResult(f, layer)
+        return f, layer
     return None
 
 
@@ -102,6 +104,7 @@ def verify(
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
     plane_ = codec.encode_dictkey(plane)
-    f_ = codec.encode_gflow(gflow.f)
-    layer_ = codec.encode_layer(gflow.layer)
+    f, layer = gflow
+    f_ = codec.encode_gflow(f)
+    layer_ = codec.encode_layer(layer)
     codec.ecatch(gflow_bind.verify, (f_, layer_), g_, iset_, oset_, plane_)

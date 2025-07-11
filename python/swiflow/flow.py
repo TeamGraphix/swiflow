@@ -11,12 +11,14 @@ from typing import TYPE_CHECKING
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import flow as flow_bind
-from swiflow.common import FlowResult, V
+from swiflow.common import Flow, Layer, V
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
     import networkx as nx
+
+FlowResult = tuple[Flow[V], Layer[V]]
 
 
 def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResult[V] | None:
@@ -48,7 +50,7 @@ def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResu
         f_, layer_ = ret_
         f = codec.decode_flow(f_)
         layer = codec.decode_layer(layer_)
-        return FlowResult(f, layer)
+        return f, layer
     return None
 
 
@@ -77,6 +79,7 @@ def verify(flow: FlowResult[V], g: nx.Graph[V], iset: AbstractSet[V], oset: Abst
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    f_ = codec.encode_flow(flow.f)
-    layer_ = codec.encode_layer(flow.layer)
+    f, layer = flow
+    f_ = codec.encode_flow(f)
+    layer_ = codec.encode_layer(layer)
     codec.ecatch(flow_bind.verify, (f_, layer_), g_, iset_, oset_)

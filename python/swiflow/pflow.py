@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import pflow as pflow_bind
-from swiflow.common import GFlowResult, PPlane, V
+from swiflow.common import Layer, PFlow, PPlane, V
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -20,13 +20,15 @@ if TYPE_CHECKING:
 
     import networkx as nx
 
+PFlowResult = tuple[PFlow[V], Layer[V]]
+
 
 def find(
     g: nx.Graph[V],
     iset: AbstractSet[V],
     oset: AbstractSet[V],
     pplane: Mapping[V, PPlane] | None = None,
-) -> GFlowResult[V] | None:
+) -> PFlowResult[V] | None:
     r"""Compute Pauli flow.
 
     If it returns a Pauli flow, it is guaranteed to be maximally-delayed, i.e., the number of layers is minimized.
@@ -45,7 +47,7 @@ def find(
 
     Returns
     -------
-    `GFlowResult` or `None`
+    `PFlowResult` or `None`
         Return the Pauli flow if any, otherwise `None`.
 
     Notes
@@ -69,12 +71,12 @@ def find(
         f_, layer_ = ret_
         f = codec.decode_gflow(f_)
         layer = codec.decode_layer(layer_)
-        return GFlowResult(f, layer)
+        return f, layer
     return None
 
 
 def verify(
-    pflow: GFlowResult[V],
+    pflow: PFlowResult[V],
     g: nx.Graph[V],
     iset: AbstractSet[V],
     oset: AbstractSet[V],
@@ -84,7 +86,7 @@ def verify(
 
     Parameters
     ----------
-    pflow : `GFlowResult`
+    pflow : `PFlowResult`
         Pauli flow to verify.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.
@@ -110,6 +112,7 @@ def verify(
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
     pplane_ = codec.encode_dictkey(pplane)
-    f_ = codec.encode_gflow(pflow.f)
-    layer_ = codec.encode_layer(pflow.layer)
+    f, layer = pflow
+    f_ = codec.encode_gflow(f)
+    layer_ = codec.encode_layer(layer)
     codec.ecatch(pflow_bind.verify, (f_, layer_), g_, iset_, oset_, pplane_)
