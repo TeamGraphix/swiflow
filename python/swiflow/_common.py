@@ -87,6 +87,14 @@ def check_layer(layer: Mapping[V, int]) -> None:
         raise ValueError(msg)
 
 
+def odd_neighbors(g: nx.Graph[V], kset: AbstractSet[V]) -> set[V]:
+    """Compute odd neighbors of `kset` in `g`."""
+    ret: set[V] = set()
+    for k in kset:
+        ret.symmetric_difference_update(g.neighbors(k))
+    return ret
+
+
 class IndexMap(Generic[V]):
     """Map between `V` and 0-based indices."""
 
