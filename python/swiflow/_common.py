@@ -46,6 +46,9 @@ def check_graph(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -
     if not (oset <= vset):
         msg = "oset must be a subset of the nodes."
         raise ValueError(msg)
+    if not nx.is_connected(g):
+        msg = "Graph is not connected."
+        raise ValueError(msg)
 
 
 def check_planelike(vset: AbstractSet[_V], oset: AbstractSet[_V], plike: Mapping[_V, _P]) -> None:

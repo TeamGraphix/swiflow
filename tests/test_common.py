@@ -27,6 +27,9 @@ def test_check_graph_ng_g() -> None:
     with pytest.raises(ValueError, match=r"oset must be a subset of the nodes\."):
         _common.check_graph(nx.Graph([("a", "b")]), set(), {"x"})
 
+    with pytest.raises(ValueError, match=r"Graph is not connected\."):
+        _common.check_graph(nx.Graph([(1, 2), (3, 4)]), set(), set())
+
 
 def test_check_graph_ng_set() -> None:
     with pytest.raises(TypeError):
