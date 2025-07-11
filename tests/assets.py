@@ -58,7 +58,7 @@ CASE1 = FlowTestCase(
 #     |
 # 2 - 4 - 6
 CASE2 = FlowTestCase(
-    nx.Graph([(1, 3), (2, 4), (3, 5), (4, 6)]),
+    nx.Graph([(1, 3), (2, 4), (3, 5), (4, 6), (3, 4)]),
     {1, 2},
     {5, 6},
     None,
