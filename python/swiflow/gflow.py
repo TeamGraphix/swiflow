@@ -69,7 +69,7 @@ def find(
 
 
 def verify(
-    gflow: GFlowResult[V],
+    gflow: tuple[Mapping[V, AbstractSet[V]], Mapping[V, int]],
     g: nx.Graph[V],
     iset: AbstractSet[V],
     oset: AbstractSet[V],

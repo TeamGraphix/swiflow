@@ -14,6 +14,7 @@ from swiflow._impl import flow as flow_bind
 from swiflow.common import Flow, Layer, V
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
     from collections.abc import Set as AbstractSet
 
     import networkx as nx
@@ -55,7 +56,7 @@ def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResu
 
 
 def verify(
-    flow: FlowResult[V],
+    flow: tuple[Mapping[V, V], Mapping[V, int]],
     g: nx.Graph[V],
     iset: AbstractSet[V],
     oset: AbstractSet[V],
