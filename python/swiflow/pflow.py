@@ -27,6 +27,7 @@ def find(
     g: nx.Graph[V],
     iset: AbstractSet[V],
     oset: AbstractSet[V],
+    *,
     pplane: Mapping[V, PPlane] | None = None,
 ) -> PFlowResult[V] | None:
     r"""Compute Pauli flow.
@@ -80,8 +81,8 @@ def verify(
     g: nx.Graph[V],
     iset: AbstractSet[V],
     oset: AbstractSet[V],
-    pplane: Mapping[V, PPlane] | None = None,
     *,
+    pplane: Mapping[V, PPlane] | None = None,
     ensure_optimal: bool = True,
 ) -> None:
     r"""Verify Pauli flow.

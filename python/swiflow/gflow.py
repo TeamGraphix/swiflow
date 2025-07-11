@@ -26,6 +26,7 @@ def find(
     g: nx.Graph[V],
     iset: AbstractSet[V],
     oset: AbstractSet[V],
+    *,
     plane: Mapping[V, Plane] | None = None,
 ) -> GFlowResult[V] | None:
     r"""Compute generalized flow.
@@ -72,8 +73,8 @@ def verify(
     g: nx.Graph[V],
     iset: AbstractSet[V],
     oset: AbstractSet[V],
-    plane: Mapping[V, Plane] | None = None,
     *,
+    plane: Mapping[V, Plane] | None = None,
     ensure_optimal: bool = True,
 ) -> None:
     r"""Verify generalized flow.

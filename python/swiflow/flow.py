@@ -55,7 +55,12 @@ def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResu
 
 
 def verify(
-    flow: FlowResult[V], g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V], *, ensure_optimal: bool = True
+    flow: FlowResult[V],
+    g: nx.Graph[V],
+    iset: AbstractSet[V],
+    oset: AbstractSet[V],
+    *,
+    ensure_optimal: bool = True,
 ) -> None:
     """Verify causal flow.
 

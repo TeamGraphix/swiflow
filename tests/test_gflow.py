@@ -10,10 +10,10 @@ from tests.assets import CASES, FlowTestCase
 
 @pytest.mark.parametrize("c", CASES)
 def test_gflow_graphix(c: FlowTestCase) -> None:
-    result = gflow.find(c.g, c.iset, c.oset, c.plane)
+    result = gflow.find(c.g, c.iset, c.oset, plane=c.plane)
     assert result == c.gflow
     if result is not None:
-        gflow.verify(result, c.g, c.iset, c.oset, c.plane)
+        gflow.verify(result, c.g, c.iset, c.oset, plane=c.plane)
 
 
 def test_gflow_redundant() -> None:
@@ -22,4 +22,4 @@ def test_gflow_redundant() -> None:
     oset = {1}
     planes = {0: Plane.XY, 1: Plane.XY}
     with pytest.raises(ValueError, match=r".*Excessive measurement planes specified.*"):
-        gflow.find(g, iset, oset, planes)
+        gflow.find(g, iset, oset, plane=planes)

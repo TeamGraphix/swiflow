@@ -11,10 +11,10 @@ from tests.assets import CASES, FlowTestCase
 @pytest.mark.filterwarnings("ignore:No Pauli measurement found")
 @pytest.mark.parametrize("c", CASES)
 def test_pflow_graphix(c: FlowTestCase) -> None:
-    result = pflow.find(c.g, c.iset, c.oset, c.pplane)
+    result = pflow.find(c.g, c.iset, c.oset, pplane=c.pplane)
     assert result == c.pflow
     if result is not None:
-        pflow.verify(result, c.g, c.iset, c.oset, c.pplane)
+        pflow.verify(result, c.g, c.iset, c.oset, pplane=c.pplane)
 
 
 def test_pflow_nopauli() -> None:
@@ -23,7 +23,7 @@ def test_pflow_nopauli() -> None:
     oset = {1}
     planes = {0: PPlane.XY}
     with pytest.warns(UserWarning, match=r".*No Pauli measurement found\. Use gflow\.find instead\..*"):
-        pflow.find(g, iset, oset, planes)
+        pflow.find(g, iset, oset, pplane=planes)
 
 
 def test_pflow_redundant() -> None:
@@ -32,4 +32,4 @@ def test_pflow_redundant() -> None:
     oset = {1}
     planes = {0: PPlane.X, 1: PPlane.Y}
     with pytest.raises(ValueError, match=r".*Excessive measurement planes specified.*"):
-        pflow.find(g, iset, oset, planes)
+        pflow.find(g, iset, oset, pplane=planes)
