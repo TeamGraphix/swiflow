@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import networkx as nx
 import pytest
-from swiflow import gflow
+from swiflow import common, gflow
 from swiflow.common import Plane
 
 from tests.assets import CASES, FlowTestCase
@@ -24,3 +24,12 @@ def test_gflow_redundant() -> None:
     planes = {0: Plane.XY, 1: Plane.XY}
     with pytest.raises(ValueError, match=r".*Excessive measurement planes specified.*"):
         gflow.find(g, iset, oset, plane=planes)
+
+
+@pytest.mark.parametrize("c", CASES)
+def test_infer_verify(c: FlowTestCase) -> None:
+    if c.gflow is None:
+        pytest.skip()
+    f, _ = c.gflow
+    layer = common.infer_layer(c.g, f)
+    gflow.verify((f, layer), c.g, c.iset, c.oset)

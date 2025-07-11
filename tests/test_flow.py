@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from swiflow import flow
+from swiflow import common, flow
 
 from tests.assets import CASES, FlowTestCase
 
@@ -13,3 +13,12 @@ def test_flow_graphix(c: FlowTestCase, *, opt: bool) -> None:
     assert result == c.flow
     if result is not None:
         flow.verify(result, c.g, c.iset, c.oset, ensure_optimal=opt)
+
+
+@pytest.mark.parametrize("c", CASES)
+def test_infer_verify(c: FlowTestCase) -> None:
+    if c.flow is None:
+        pytest.skip()
+    f, _ = c.flow
+    layer = common.infer_layer(c.g, f)
+    flow.verify((f, layer), c.g, c.iset, c.oset)
