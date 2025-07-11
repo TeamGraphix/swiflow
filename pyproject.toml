@@ -67,6 +67,13 @@ python_version = "3.9"
 strict = true
 files = ["docs/source/conf.py", "python", "tests"]
 
+[tool.pyright]
+reportUnknownArgumentType = "information"
+reportUnknownLambdaType = "information"
+reportUnknownMemberType = "information"
+reportUnknownParameterType = "information"
+reportUnknownVariableType = "information"
+
 [tool.ruff]
 extend-include = ["*.ipynb"]
 line-length = 120
