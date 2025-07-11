@@ -15,4 +15,5 @@ def verify(
     iset: set[int],
     oset: set[int],
     pplane: dict[int, PPlane],
+    optimal: bool,
 ) -> None: ...

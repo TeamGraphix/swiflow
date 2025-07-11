@@ -81,8 +81,10 @@ def verify(
     iset: AbstractSet[V],
     oset: AbstractSet[V],
     pplane: Mapping[V, PPlane] | None = None,
+    *,
+    ensure_optimal: bool = True,
 ) -> None:
-    r"""Verify maximally-delayed Pauli flow.
+    r"""Verify Pauli flow.
 
     Parameters
     ----------
@@ -97,6 +99,8 @@ def verify(
     pplane : `collections.abc.Mapping`
         Measurement plane or Pauli index for each node in :math:`V \setminus O`.
         Defaults to `PPlane.XY`.
+    ensure_optimal : `bool`
+        Wether the pflow should be maximally-delayed. Defaults to `True`.
 
     Raises
     ------
@@ -115,4 +119,4 @@ def verify(
     f, layer = pflow
     f_ = codec.encode_gflow(f)
     layer_ = codec.encode_layer(layer)
-    codec.ecatch(pflow_bind.verify, (f_, layer_), g_, iset_, oset_, pplane_)
+    codec.ecatch(pflow_bind.verify, (f_, layer_), g_, iset_, oset_, pplane_, ensure_optimal)

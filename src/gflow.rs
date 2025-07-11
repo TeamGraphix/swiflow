@@ -250,6 +250,7 @@ pub fn verify(
     iset: Nodes,
     oset: Nodes,
     planes: Planes,
+    optimal: bool,
 ) -> PyResult<()> {
     let (f, layer) = gflow;
     let n = g.len();
@@ -258,8 +259,10 @@ pub fn verify(
         .iter()
         .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
     validate::check_domain(f_flatiter, &vset, &iset, &oset)?;
-    validate::check_initial(&layer, &oset, true)?;
     check_definition(&f, &layer, &g, &planes)?;
+    if optimal {
+        validate::check_initial(&layer, &oset, true)?;
+    }
     Ok(())
 }
 
@@ -367,7 +370,7 @@ mod tests {
         let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(layer, vec![0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, layer), g, iset, oset, planes, true).unwrap();
     }
 
     #[test_log::test]
@@ -387,7 +390,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([3]));
         assert_eq!(f[&3], Nodes::from([4]));
         assert_eq!(layer, vec![4, 3, 2, 1, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, layer), g, iset, oset, planes, true).unwrap();
     }
 
     #[test_log::test]
@@ -407,7 +410,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([4]));
         assert_eq!(f[&3], Nodes::from([5]));
         assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, layer), g, iset, oset, planes, true).unwrap();
     }
 
     #[test_log::test]
@@ -425,7 +428,7 @@ mod tests {
         assert_eq!(f[&1], Nodes::from([3, 4, 5]));
         assert_eq!(f[&2], Nodes::from([3, 5]));
         assert_eq!(layer, vec![1, 1, 1, 0, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, layer), g, iset, oset, planes, true).unwrap();
     }
 
     #[test_log::test]
@@ -445,7 +448,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([2, 4]));
         assert_eq!(f[&3], Nodes::from([3]));
         assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, layer), g, iset, oset, planes, true).unwrap();
     }
 
     #[test_log::test]

@@ -73,8 +73,10 @@ def verify(
     iset: AbstractSet[V],
     oset: AbstractSet[V],
     plane: Mapping[V, Plane] | None = None,
+    *,
+    ensure_optimal: bool = True,
 ) -> None:
-    r"""Verify maximally-delayed generalized flow.
+    r"""Verify generalized flow.
 
     Parameters
     ----------
@@ -89,6 +91,8 @@ def verify(
     plane : `collections.abc.Mapping`
         Measurement plane for each node in :math:`V \setminus O`.
         Defaults to `Plane.XY`.
+    ensure_optimal : `bool`
+        Wether the gflow should be maximally-delayed. Defaults to `True`.
 
     Raises
     ------
@@ -107,4 +111,4 @@ def verify(
     f, layer = gflow
     f_ = codec.encode_gflow(f)
     layer_ = codec.encode_layer(layer)
-    codec.ecatch(gflow_bind.verify, (f_, layer_), g_, iset_, oset_, plane_)
+    codec.ecatch(gflow_bind.verify, (f_, layer_), g_, iset_, oset_, plane_, ensure_optimal)

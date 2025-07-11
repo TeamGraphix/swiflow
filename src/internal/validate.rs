@@ -13,6 +13,8 @@ use crate::common::{
 
 /// Checks if the layer-zero nodes are correctly chosen.
 ///
+/// This check can be skipped unless maximally-delayed flow is required.
+///
 /// # Arguments
 ///
 /// - `layer`: The layer.

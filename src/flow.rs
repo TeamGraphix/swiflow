@@ -122,13 +122,21 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
 /// - If `flow` is inconsistent with `g`.
 #[pyfunction]
 #[allow(clippy::needless_pass_by_value)]
-pub fn verify(flow: (Flow, Layer), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
+pub fn verify(
+    flow: (Flow, Layer),
+    g: Graph,
+    iset: Nodes,
+    oset: Nodes,
+    optimal: bool,
+) -> PyResult<()> {
     let (f, layer) = flow;
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     validate::check_domain(f.iter(), &vset, &iset, &oset)?;
-    validate::check_initial(&layer, &oset, true)?;
     check_definition(&f, &layer, &g)?;
+    if optimal {
+        validate::check_initial(&layer, &oset, true)?;
+    }
     Ok(())
 }
 
@@ -173,7 +181,7 @@ mod tests {
         let (f, layer) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(layer, vec![0, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        verify((f, layer), g, iset, oset, true).unwrap();
     }
 
     #[test_log::test]
@@ -187,7 +195,7 @@ mod tests {
         assert_eq!(f[&2], 3);
         assert_eq!(f[&3], 4);
         assert_eq!(layer, vec![4, 3, 2, 1, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        verify((f, layer), g, iset, oset, true).unwrap();
     }
 
     #[test_log::test]
@@ -201,7 +209,7 @@ mod tests {
         assert_eq!(f[&2], 4);
         assert_eq!(f[&3], 5);
         assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        verify((f, layer), g, iset, oset, true).unwrap();
     }
 
     #[test_log::test]

@@ -54,8 +54,10 @@ def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResu
     return None
 
 
-def verify(flow: FlowResult[V], g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> None:
-    """Verify maximally-delayed causal flow.
+def verify(
+    flow: FlowResult[V], g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V], *, ensure_optimal: bool = True
+) -> None:
+    """Verify causal flow.
 
     Parameters
     ----------
@@ -67,6 +69,8 @@ def verify(flow: FlowResult[V], g: nx.Graph[V], iset: AbstractSet[V], oset: Abst
         Input nodes.
     oset : `collections.abc.Set`
         Output nodes.
+    ensure_optimal : `bool`
+        Wether the flow should be maximally-delayed. Defaults to `True`.
 
     Raises
     ------
@@ -82,4 +86,4 @@ def verify(flow: FlowResult[V], g: nx.Graph[V], iset: AbstractSet[V], oset: Abst
     f, layer = flow
     f_ = codec.encode_flow(f)
     layer_ = codec.encode_layer(layer)
-    codec.ecatch(flow_bind.verify, (f_, layer_), g_, iset_, oset_)
+    codec.ecatch(flow_bind.verify, (f_, layer_), g_, iset_, oset_, ensure_optimal)

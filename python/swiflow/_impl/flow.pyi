@@ -1,2 +1,8 @@
 def find(g: list[set[int]], iset: set[int], oset: set[int]) -> tuple[dict[int, int], list[int]] | None: ...
-def verify(flow: tuple[dict[int, int], list[int]], g: list[set[int]], iset: set[int], oset: set[int]) -> None: ...
+def verify(
+    flow: tuple[dict[int, int], list[int]],
+    g: list[set[int]],
+    iset: set[int],
+    oset: set[int],
+    optimal: bool,
+) -> None: ...
