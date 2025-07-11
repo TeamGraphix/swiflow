@@ -6,7 +6,7 @@ swiflow.common module
 
 .. automodule:: swiflow.common
    :members:
-   :exclude-members: Plane, PPlane, V, P
+   :exclude-members: Plane, PPlane
 
    .. autoclass:: swiflow.common.Plane
 

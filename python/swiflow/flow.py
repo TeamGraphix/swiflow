@@ -6,12 +6,13 @@ See :footcite:t:`Mhalla2008` for details.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Hashable
+from typing import TYPE_CHECKING, TypeVar
 
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import flow as flow_bind
-from swiflow.common import Flow, Layer, V
+from swiflow.common import Flow, Layer
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -19,10 +20,11 @@ if TYPE_CHECKING:
 
     import networkx as nx
 
-FlowResult = tuple[Flow[V], Layer[V]]
+_V = TypeVar("_V", bound=Hashable)
+FlowResult = tuple[Flow[_V], Layer[_V]]
 
 
-def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResult[V] | None:
+def find(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -> FlowResult[_V] | None:
     """Compute causal flow.
 
     If it returns a flow, it is guaranteed to be maximally-delayed, i.e., the number of layers is minimized.
@@ -56,10 +58,10 @@ def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResu
 
 
 def verify(
-    flow: tuple[Mapping[V, V], Mapping[V, int]],
-    g: nx.Graph[V],
-    iset: AbstractSet[V],
-    oset: AbstractSet[V],
+    flow: tuple[Mapping[_V, _V], Mapping[_V, int]],
+    g: nx.Graph[_V],
+    iset: AbstractSet[_V],
+    oset: AbstractSet[_V],
     *,
     ensure_optimal: bool = False,
 ) -> None:

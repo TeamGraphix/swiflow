@@ -6,12 +6,13 @@ See :footcite:t:`Mhalla2008` and :footcite:t:`Backens2021` for details.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Hashable
+from typing import TYPE_CHECKING, TypeVar
 
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import gflow as gflow_bind
-from swiflow.common import GFlow, Layer, Plane, V
+from swiflow.common import GFlow, Layer, Plane
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -19,16 +20,17 @@ if TYPE_CHECKING:
 
     import networkx as nx
 
-GFlowResult = tuple[GFlow[V], Layer[V]]
+_V = TypeVar("_V", bound=Hashable)
+GFlowResult = tuple[GFlow[_V], Layer[_V]]
 
 
 def find(
-    g: nx.Graph[V],
-    iset: AbstractSet[V],
-    oset: AbstractSet[V],
+    g: nx.Graph[_V],
+    iset: AbstractSet[_V],
+    oset: AbstractSet[_V],
     *,
-    plane: Mapping[V, Plane] | None = None,
-) -> GFlowResult[V] | None:
+    plane: Mapping[_V, Plane] | None = None,
+) -> GFlowResult[_V] | None:
     r"""Compute generalized flow.
 
     If it returns a gflow, it is guaranteed to be maximally-delayed, i.e., the number of layers is minimized.
@@ -69,12 +71,12 @@ def find(
 
 
 def verify(
-    gflow: tuple[Mapping[V, AbstractSet[V]], Mapping[V, int]],
-    g: nx.Graph[V],
-    iset: AbstractSet[V],
-    oset: AbstractSet[V],
+    gflow: tuple[Mapping[_V, AbstractSet[_V]], Mapping[_V, int]],
+    g: nx.Graph[_V],
+    iset: AbstractSet[_V],
+    oset: AbstractSet[_V],
     *,
-    plane: Mapping[V, Plane] | None = None,
+    plane: Mapping[_V, Plane] | None = None,
     ensure_optimal: bool = False,
 ) -> None:
     r"""Verify generalized flow.

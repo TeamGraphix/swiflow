@@ -8,7 +8,6 @@ from collections.abc import Set as AbstractSet
 from typing import TypeVar
 
 import networkx as nx
-from typing_extensions import ParamSpec
 
 from swiflow import _common
 from swiflow._impl import gflow, pflow
@@ -16,33 +15,30 @@ from swiflow._impl import gflow, pflow
 Plane = gflow.Plane
 PPlane = pflow.PPlane
 
-T = TypeVar("T")
-V = TypeVar("V", bound=Hashable)
-P = TypeVar("P", Plane, PPlane)
-S = ParamSpec("S")
+_V = TypeVar("_V", bound=Hashable)
 
-Flow = dict[V, V]
+Flow = dict[_V, _V]
 """Flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
 
-GFlow = dict[V, set[V]]
+GFlow = dict[_V, set[_V]]
 """Generalized flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
 
-PFlow = dict[V, set[V]]
+PFlow = dict[_V, set[_V]]
 """Pauli flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
 
-Layer = dict[V, int]
+Layer = dict[_V, int]
 r"""Layer of each node representing the partial order. :math:`layer(u) > layer(v)` implies :math:`u \prec v`.
 """
 
 
-def _infer_layer_impl(gd: nx.DiGraph[V]) -> Mapping[V, int]:
+def _infer_layer_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
     pred = {u: set(gd.predecessors(u)) for u in gd.nodes}
     work = {u for u, pu in pred.items() if not pu}
-    ret: dict[V, int] = {}
+    ret: dict[_V, int] = {}
     for l_now in itertools.count():
         if not work:
             break
-        next_work: set[V] = set()
+        next_work: set[_V] = set()
         for u in work:
             ret[u] = l_now
             for v in gd.successors(u):
@@ -57,14 +53,14 @@ def _infer_layer_impl(gd: nx.DiGraph[V]) -> Mapping[V, int]:
     return ret
 
 
-def infer_layer(g: nx.Graph[V], anyflow: Mapping[V, V | AbstractSet[V]]) -> Mapping[V, int]:
+def infer_layer(g: nx.Graph[_V], anyflow: Mapping[_V, _V | AbstractSet[_V]]) -> Mapping[_V, int]:
     """Infer layer from flow/gflow.
 
     Notes
     -----
     This function is based on greedy algorithm.
     """
-    gd: nx.DiGraph[V] = nx.DiGraph()
+    gd: nx.DiGraph[_V] = nx.DiGraph()
     for u, fu_ in anyflow.items():
         fu = fu_ if isinstance(fu_, AbstractSet) else {fu_}
         fu_odd = _common.odd_neighbors(g, fu)

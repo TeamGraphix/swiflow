@@ -7,12 +7,13 @@ See :footcite:t:`Simons2021` for details.
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
+from collections.abc import Hashable
+from typing import TYPE_CHECKING, TypeVar
 
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import pflow as pflow_bind
-from swiflow.common import Layer, PFlow, PPlane, V
+from swiflow.common import Layer, PFlow, PPlane
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -20,16 +21,17 @@ if TYPE_CHECKING:
 
     import networkx as nx
 
-PFlowResult = tuple[PFlow[V], Layer[V]]
+_V = TypeVar("_V", bound=Hashable)
+PFlowResult = tuple[PFlow[_V], Layer[_V]]
 
 
 def find(
-    g: nx.Graph[V],
-    iset: AbstractSet[V],
-    oset: AbstractSet[V],
+    g: nx.Graph[_V],
+    iset: AbstractSet[_V],
+    oset: AbstractSet[_V],
     *,
-    pplane: Mapping[V, PPlane] | None = None,
-) -> PFlowResult[V] | None:
+    pplane: Mapping[_V, PPlane] | None = None,
+) -> PFlowResult[_V] | None:
     r"""Compute Pauli flow.
 
     If it returns a Pauli flow, it is guaranteed to be maximally-delayed, i.e., the number of layers is minimized.
@@ -77,12 +79,12 @@ def find(
 
 
 def verify(
-    pflow: tuple[Mapping[V, AbstractSet[V]], Mapping[V, int]],
-    g: nx.Graph[V],
-    iset: AbstractSet[V],
-    oset: AbstractSet[V],
+    pflow: tuple[Mapping[_V, AbstractSet[_V]], Mapping[_V, int]],
+    g: nx.Graph[_V],
+    iset: AbstractSet[_V],
+    oset: AbstractSet[_V],
     *,
-    pplane: Mapping[V, PPlane] | None = None,
+    pplane: Mapping[_V, PPlane] | None = None,
     ensure_optimal: bool = False,
 ) -> None:
     r"""Verify Pauli flow.

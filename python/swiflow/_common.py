@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Hashable, Iterable, Mapping
 from collections.abc import Set as AbstractSet
-from typing import Generic
+from typing import Generic, TypeVar
 
 import networkx as nx
+from typing_extensions import ParamSpec
 
 from swiflow._impl import FlowValidationMessage
-from swiflow.common import P, S, T, V
+
+_V = TypeVar("_V", bound=Hashable)
 
 
-def check_graph(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> None:
+def check_graph(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -> None:
     """Check if `(g, iset, oset)` is a valid open graph for MBQC.
 
     Raises
@@ -46,7 +48,7 @@ def check_graph(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> N
         raise ValueError(msg)
 
 
-def check_planelike(vset: AbstractSet[V], oset: AbstractSet[V], plike: Mapping[V, P]) -> None:
+def check_planelike(vset: AbstractSet[_V], oset: AbstractSet[_V], plike: Mapping[_V, _P]) -> None:
     r"""Check if measurement description is valid.
 
     Parameters
@@ -80,28 +82,33 @@ def check_planelike(vset: AbstractSet[V], oset: AbstractSet[V], plike: Mapping[V
         raise ValueError(msg)
 
 
-def check_layer(layer: Mapping[V, int]) -> None:
+def check_layer(layer: Mapping[_V, int]) -> None:
     """Check if layer range is compatible with the current implementation."""
     if min(layer.values(), default=0) != 0:
         msg = "Minimum layer must be 0."
         raise ValueError(msg)
 
 
-def odd_neighbors(g: nx.Graph[V], kset: AbstractSet[V]) -> set[V]:
+def odd_neighbors(g: nx.Graph[_V], kset: AbstractSet[_V]) -> set[_V]:
     """Compute odd neighbors of `kset` in `g`."""
-    ret: set[V] = set()
+    ret: set[_V] = set()
     for k in kset:
         ret.symmetric_difference_update(g.neighbors(k))
     return ret
 
 
-class IndexMap(Generic[V]):
+_T = TypeVar("_T")
+_P = TypeVar("_P")
+_S = ParamSpec("_S")
+
+
+class IndexMap(Generic[_V]):
     """Map between `V` and 0-based indices."""
 
-    __v2i: dict[V, int]
-    __i2v: list[V]
+    __v2i: dict[_V, int]
+    __i2v: list[_V]
 
-    def __init__(self, vset: AbstractSet[V]) -> None:
+    def __init__(self, vset: AbstractSet[_V]) -> None:
         """Initialize the map from `vset`.
 
         Parameters
@@ -120,7 +127,7 @@ class IndexMap(Generic[V]):
             self.__i2v = list(vset)
         self.__v2i = {v: i for i, v in enumerate(self.__i2v)}
 
-    def encode(self, v: V) -> int:
+    def encode(self, v: _V) -> int:
         """Encode `v` to the index.
 
         Returns
@@ -139,7 +146,7 @@ class IndexMap(Generic[V]):
             raise ValueError(msg)
         return ind
 
-    def encode_graph(self, g: nx.Graph[V]) -> list[set[int]]:
+    def encode_graph(self, g: nx.Graph[_V]) -> list[set[int]]:
         """Encode graph.
 
         Returns
@@ -148,11 +155,11 @@ class IndexMap(Generic[V]):
         """
         return [self.encode_set(g[v].keys()) for v in self.__i2v]
 
-    def encode_set(self, vset: AbstractSet[V]) -> set[int]:
+    def encode_set(self, vset: AbstractSet[_V]) -> set[int]:
         """Encode set."""
         return {self.encode(v) for v in vset}
 
-    def encode_dictkey(self, mapping: Mapping[V, P]) -> dict[int, P]:
+    def encode_dictkey(self, mapping: Mapping[_V, _P]) -> dict[int, _P]:
         """Encode dict key.
 
         Returns
@@ -161,7 +168,7 @@ class IndexMap(Generic[V]):
         """
         return {self.encode(k): v for k, v in mapping.items()}
 
-    def encode_flow(self, f: Mapping[V, V]) -> dict[int, int]:
+    def encode_flow(self, f: Mapping[_V, _V]) -> dict[int, int]:
         """Encode flow.
 
         Returns
@@ -170,7 +177,7 @@ class IndexMap(Generic[V]):
         """
         return {self.encode(i): self.encode(j) for i, j in f.items()}
 
-    def encode_gflow(self, f: Mapping[V, AbstractSet[V]]) -> dict[int, set[int]]:
+    def encode_gflow(self, f: Mapping[_V, AbstractSet[_V]]) -> dict[int, set[int]]:
         """Encode gflow.
 
         Returns
@@ -179,7 +186,7 @@ class IndexMap(Generic[V]):
         """
         return {self.encode(i): self.encode_set(si) for i, si in f.items()}
 
-    def encode_layer(self, layer: Mapping[V, int]) -> list[int]:
+    def encode_layer(self, layer: Mapping[_V, int]) -> list[int]:
         """Encode layer.
 
         Returns
@@ -196,7 +203,7 @@ class IndexMap(Generic[V]):
             msg = "Layers must be specified for all nodes."
             raise ValueError(msg) from None
 
-    def decode(self, i: int) -> V:
+    def decode(self, i: int) -> _V:
         """Decode the index.
 
         Returns
@@ -215,11 +222,11 @@ class IndexMap(Generic[V]):
             raise ValueError(msg) from None
         return v
 
-    def decode_set(self, iset: AbstractSet[int]) -> set[V]:
+    def decode_set(self, iset: AbstractSet[int]) -> set[_V]:
         """Decode set."""
         return {self.decode(i) for i in iset}
 
-    def decode_flow(self, f_: Mapping[int, int]) -> dict[V, V]:
+    def decode_flow(self, f_: Mapping[int, int]) -> dict[_V, _V]:
         """Decode MBQC flow.
 
         Returns
@@ -228,7 +235,7 @@ class IndexMap(Generic[V]):
         """
         return {self.decode(i): self.decode(j) for i, j in f_.items()}
 
-    def decode_gflow(self, f_: Mapping[int, AbstractSet[int]]) -> dict[V, set[V]]:
+    def decode_gflow(self, f_: Mapping[int, AbstractSet[int]]) -> dict[_V, set[_V]]:
         """Decode MBQC gflow.
 
         Returns
@@ -237,7 +244,7 @@ class IndexMap(Generic[V]):
         """
         return {self.decode(i): self.decode_set(si) for i, si in f_.items()}
 
-    def decode_layer(self, layer_: Iterable[int]) -> dict[V, int]:
+    def decode_layer(self, layer_: Iterable[int]) -> dict[_V, int]:
         """Decode MBQC layer.
 
         Returns
@@ -283,7 +290,7 @@ class IndexMap(Generic[V]):
             raise TypeError  # pragma: no cover
         return ValueError(msg)
 
-    def ecatch(self, f: Callable[S, T], *args: S.args, **kwargs: S.kwargs) -> T:
+    def ecatch(self, f: Callable[_S, _T], *args: _S.args, **kwargs: _S.kwargs) -> _T:
         """Wrap binding call to decode raw error messages."""
         try:
             return f(*args, **kwargs)
