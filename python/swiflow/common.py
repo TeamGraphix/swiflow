@@ -61,6 +61,7 @@ def infer_layer(g: nx.Graph[_V], anyflow: Mapping[_V, _V | AbstractSet[_V]]) -> 
     This function is based on greedy algorithm.
     """
     gd: nx.DiGraph[_V] = nx.DiGraph()
+    gd.add_nodes_from(g.nodes)
     for u, fu_ in anyflow.items():
         fu = fu_ if isinstance(fu_, AbstractSet) else {fu_}
         fu_odd = _common.odd_neighbors(g, fu)
