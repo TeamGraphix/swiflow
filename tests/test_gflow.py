@@ -9,11 +9,12 @@ from tests.assets import CASES, FlowTestCase
 
 
 @pytest.mark.parametrize("c", CASES)
-def test_gflow_graphix(c: FlowTestCase) -> None:
+@pytest.mark.parametrize("opt", [True, False])
+def test_gflow_graphix(c: FlowTestCase, *, opt: bool) -> None:
     result = gflow.find(c.g, c.iset, c.oset, plane=c.plane)
     assert result == c.gflow
     if result is not None:
-        gflow.verify(result, c.g, c.iset, c.oset, plane=c.plane)
+        gflow.verify(result, c.g, c.iset, c.oset, plane=c.plane, ensure_optimal=opt)
 
 
 def test_gflow_redundant() -> None:
