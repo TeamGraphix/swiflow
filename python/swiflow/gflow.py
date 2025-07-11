@@ -75,7 +75,7 @@ def verify(
     oset: AbstractSet[V],
     *,
     plane: Mapping[V, Plane] | None = None,
-    ensure_optimal: bool = True,
+    ensure_optimal: bool = False,
 ) -> None:
     r"""Verify generalized flow.
 
@@ -93,7 +93,7 @@ def verify(
         Measurement plane for each node in :math:`V \setminus O`.
         Defaults to `Plane.XY`.
     ensure_optimal : `bool`
-        Wether the gflow should be maximally-delayed. Defaults to `True`.
+        Wether the gflow should be maximally-delayed. Defaults to `False`.
 
     Raises
     ------

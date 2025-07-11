@@ -60,7 +60,7 @@ def verify(
     iset: AbstractSet[V],
     oset: AbstractSet[V],
     *,
-    ensure_optimal: bool = True,
+    ensure_optimal: bool = False,
 ) -> None:
     """Verify causal flow.
 
@@ -75,7 +75,7 @@ def verify(
     oset : `collections.abc.Set`
         Output nodes.
     ensure_optimal : `bool`
-        Wether the flow should be maximally-delayed. Defaults to `True`.
+        Wether the flow should be maximally-delayed. Defaults to `False`.
 
     Raises
     ------

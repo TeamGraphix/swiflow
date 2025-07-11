@@ -83,7 +83,7 @@ def verify(
     oset: AbstractSet[V],
     *,
     pplane: Mapping[V, PPlane] | None = None,
-    ensure_optimal: bool = True,
+    ensure_optimal: bool = False,
 ) -> None:
     r"""Verify Pauli flow.
 
@@ -101,7 +101,7 @@ def verify(
         Measurement plane or Pauli index for each node in :math:`V \setminus O`.
         Defaults to `PPlane.XY`.
     ensure_optimal : `bool`
-        Wether the pflow should be maximally-delayed. Defaults to `True`.
+        Wether the pflow should be maximally-delayed. Defaults to `False`.
 
     Raises
     ------
