@@ -150,7 +150,7 @@ fn init_work(
 /// - Arguments are **NOT** verified.
 #[pyfunction]
 #[tracing::instrument]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
 #[inline]
 pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow, Layer)> {
     let n = g.len();
@@ -245,7 +245,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
 /// - If `gflow` is invalid.
 /// - If `gflow` is inconsistent with `g`.
 #[pyfunction]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
 #[inline]
 pub fn verify(
     gflow: (GFlow, Layer),

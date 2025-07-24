@@ -30,7 +30,7 @@ use pyo3::prelude::*;
 // swiflow._impl
 #[pymodule]
 #[pyo3(name = "_impl")]
-#[allow(clippy::similar_names)]
+#[expect(clippy::similar_names)]
 #[cfg(not(tarpaulin_include))]
 fn entrypoint(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Remapped to swiflow._impl.FlowValidationMessage

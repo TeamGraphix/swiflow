@@ -54,7 +54,7 @@ fn check_definition(f: &Flow, layer: &Layer, g: &Graph) -> Result<(), FlowValida
 /// - Arguments are **NOT** verified.
 #[pyfunction]
 #[tracing::instrument]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
 #[inline]
 pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
     let n = g.len();
@@ -123,7 +123,7 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
 /// - If `flow` is invalid.
 /// - If `flow` is inconsistent with `g`.
 #[pyfunction]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
 #[inline]
 pub fn verify(flow: (Flow, Layer), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
     let (f, layer) = flow;
