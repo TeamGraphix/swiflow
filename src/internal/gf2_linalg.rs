@@ -1,10 +1,10 @@
 //! GF(2) linear solver for gflow algorithm.
 
-use std::{
-    collections::BTreeMap,
+use core::{
     fmt::{self, Debug, Formatter},
     ops::DerefMut,
 };
+use std::collections::BTreeMap;
 
 use fixedbitset::FixedBitSet;
 use itertools::Itertools;

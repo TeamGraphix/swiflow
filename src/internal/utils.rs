@@ -1,10 +1,10 @@
 //! Utilities.
 
-use std::{
-    collections::BTreeSet,
+use core::{
     hash::Hash,
     ops::{Deref, DerefMut},
 };
+use std::collections::BTreeSet;
 
 use fixedbitset::FixedBitSet;
 

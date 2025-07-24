@@ -1,6 +1,6 @@
 //! Maximally-delayed generalized flow algorithm.
 
-use std::iter;
+use core::iter;
 
 use fixedbitset::FixedBitSet;
 use hashbrown;
@@ -151,6 +151,7 @@ fn init_work(
 #[pyfunction]
 #[tracing::instrument]
 #[allow(clippy::needless_pass_by_value)]
+#[inline]
 pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow, Layer)> {
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
@@ -245,6 +246,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
 /// - If `gflow` is inconsistent with `g`.
 #[pyfunction]
 #[allow(clippy::needless_pass_by_value)]
+#[inline]
 pub fn verify(
     gflow: (GFlow, Layer),
     g: Graph,

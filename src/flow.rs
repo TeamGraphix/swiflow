@@ -55,6 +55,7 @@ fn check_definition(f: &Flow, layer: &Layer, g: &Graph) -> Result<(), FlowValida
 #[pyfunction]
 #[tracing::instrument]
 #[allow(clippy::needless_pass_by_value)]
+#[inline]
 pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
@@ -123,6 +124,7 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
 /// - If `flow` is inconsistent with `g`.
 #[pyfunction]
 #[allow(clippy::needless_pass_by_value)]
+#[inline]
 pub fn verify(flow: (Flow, Layer), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
     let (f, layer) = flow;
     let n = g.len();

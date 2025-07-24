@@ -3,10 +3,13 @@
 //! From the Python side, bindings are visible as `swiflow._impl.XXX`.
 #![warn(clippy::pedantic)]
 #![warn(
+    clippy::missing_const_for_fn,
+    clippy::missing_inline_in_public_items,
+    clippy::std_instead_of_core,
     rust_2018_compatibility,
+    rust_2018_idioms,
     rust_2021_compatibility,
-    rust_2024_compatibility,
-    rust_2018_idioms
+    rust_2024_compatibility
 )]
 
 #[macro_use]

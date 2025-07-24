@@ -1,6 +1,6 @@
 //! Maximally-delayed Pauli flow algorithm.
 
-use std::iter;
+use core::iter;
 
 use fixedbitset::FixedBitSet;
 use hashbrown;
@@ -324,6 +324,7 @@ fn find_impl<const K: BranchKind>(ctx: &mut PFlowContext<'_>) -> bool {
 #[pyfunction]
 #[tracing::instrument]
 #[allow(clippy::needless_pass_by_value)]
+#[inline]
 pub fn find(g: Graph, iset: Nodes, oset: Nodes, pplanes: PPlanes) -> Option<(PFlow, Layer)> {
     let yset = matching_nodes(&pplanes, |pp| matches!(pp, PPlane::Y));
     let xyset = matching_nodes(&pplanes, |pp| matches!(pp, PPlane::X | PPlane::Y));
@@ -433,6 +434,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, pplanes: PPlanes) -> Option<(PFl
 /// - If `pflow` is inconsistent with `g`.
 #[pyfunction]
 #[allow(clippy::needless_pass_by_value)]
+#[inline]
 pub fn verify(
     pflow: (PFlow, Layer),
     g: Graph,
