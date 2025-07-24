@@ -1,6 +1,6 @@
 //! Maximally-delayed Pauli flow algorithm.
 
-use std::iter;
+use core::iter;
 
 use fixedbitset::FixedBitSet;
 use hashbrown;
@@ -8,10 +8,11 @@ use pyo3::prelude::*;
 
 use crate::{
     common::{
+        FATAL_MSG,
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPPlane, InvalidMeasurementSpec,
         },
-        Graph, Layer, Nodes, OrderedNodes, FATAL_MSG,
+        Graph, Layer, Nodes, OrderedNodes,
     },
     internal::{
         gf2_linalg::GF2Solver,
@@ -275,7 +276,7 @@ struct PFlowContext<'a> {
 
 /// Implements the branch-specific part of the algorithm.
 #[tracing::instrument]
-fn find_impl<const K: BranchKind>(ctx: &mut PFlowContext) -> bool {
+fn find_impl<const K: BranchKind>(ctx: &mut PFlowContext<'_>) -> bool {
     const {
         assert!(K == BRANCH_XY || K == BRANCH_YZ || K == BRANCH_XZ);
     };
@@ -322,7 +323,8 @@ fn find_impl<const K: BranchKind>(ctx: &mut PFlowContext) -> bool {
 /// - Arguments are **NOT** verified.
 #[pyfunction]
 #[tracing::instrument]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
+#[inline]
 pub fn find(g: Graph, iset: Nodes, oset: Nodes, pplanes: PPlanes) -> Option<(PFlow, Layer)> {
     let yset = matching_nodes(&pplanes, |pp| matches!(pp, PPlane::Y));
     let xyset = matching_nodes(&pplanes, |pp| matches!(pp, PPlane::X | PPlane::Y));
@@ -431,7 +433,8 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, pplanes: PPlanes) -> Option<(PFl
 /// - If `pflow` is invalid.
 /// - If `pflow` is inconsistent with `g`.
 #[pyfunction]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
+#[inline]
 pub fn verify(
     pflow: (PFlow, Layer),
     g: Graph,

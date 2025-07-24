@@ -47,6 +47,7 @@ pub enum FlowValidationError {
 }
 
 impl From<FlowValidationError> for PyErr {
+    #[inline]
     fn from(e: FlowValidationError) -> Self {
         PyValueError::new_err(e)
     }

@@ -68,7 +68,7 @@ pub fn check_domain<'a, 'b>(
 
 #[cfg(test)]
 mod tests {
-    use std::iter;
+    use core::iter;
 
     use super::*;
     use crate::common::Nodes;

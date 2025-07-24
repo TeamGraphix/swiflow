@@ -1,17 +1,17 @@
 //! GF(2) linear solver for gflow algorithm.
 
-use std::{
-    collections::BTreeMap,
+use core::{
     fmt::{self, Debug, Formatter},
     ops::DerefMut,
 };
+use std::collections::BTreeMap;
 
 use fixedbitset::FixedBitSet;
 use itertools::Itertools;
 
 /// Solver for GF(2) linear equations.
 #[derive(PartialEq, Eq)]
-pub struct GF2Solver<W: DerefMut<Target = [FixedBitSet]>> {
+pub struct GF2Solver<W> {
     /// Number of rows in the coefficient matrix.
     rows: usize,
     /// Number of columns in the coefficient matrix.

@@ -2,6 +2,15 @@
 //!
 //! From the Python side, bindings are visible as `swiflow._impl.XXX`.
 #![warn(clippy::pedantic)]
+#![warn(
+    clippy::missing_const_for_fn,
+    clippy::missing_inline_in_public_items,
+    clippy::std_instead_of_core,
+    rust_2018_compatibility,
+    rust_2018_idioms,
+    rust_2021_compatibility,
+    rust_2024_compatibility
+)]
 
 #[macro_use]
 mod internal;
@@ -21,7 +30,7 @@ use pyo3::prelude::*;
 // swiflow._impl
 #[pymodule]
 #[pyo3(name = "_impl")]
-#[allow(clippy::similar_names)]
+#[expect(clippy::similar_names)]
 #[cfg(not(tarpaulin_include))]
 fn entrypoint(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Remapped to swiflow._impl.FlowValidationMessage
