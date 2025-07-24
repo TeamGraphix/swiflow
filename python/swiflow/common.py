@@ -53,7 +53,40 @@ def _infer_layer_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
     return ret
 
 
-def infer_layer(g: nx.Graph[_V], anyflow: Mapping[_V, _V | AbstractSet[_V]]) -> Mapping[_V, int]:
+def _special_edges(
+    g: nx.Graph[_V],
+    anyflow: Mapping[_V, _V | AbstractSet[_V]],
+    pplane: Mapping[_V, PPlane] | None,
+) -> set[tuple[_V, _V]]:
+    """Compute special edges that can bypass partial order constraints in Pauli flow."""
+    ret: set[tuple[_V, _V]] = set()
+    if pplane is None:
+        return ret
+    for u, fu_ in anyflow.items():
+        fu = fu_ if isinstance(fu_, AbstractSet) else {fu_}
+        fu_odd = _common.odd_neighbors(g, fu)
+        for v in itertools.chain(fu, fu_odd):
+            if u == v:
+                continue
+            if (pp := pplane.get(v)) is None:
+                continue
+            if pp == PPlane.X and v in fu:
+                ret.add((u, v))
+                continue
+            if pp == PPlane.Y and v in fu and v in fu_odd:
+                ret.add((u, v))
+                continue
+            if pp == PPlane.Z and v in fu_odd:
+                ret.add((u, v))
+                continue
+    return ret
+
+
+def infer_layer(
+    g: nx.Graph[_V],
+    anyflow: Mapping[_V, _V | AbstractSet[_V]],
+    pplane: Mapping[_V, PPlane] | None = None,
+) -> Mapping[_V, int]:
     """Infer layer from flow/gflow.
 
     Parameters
@@ -62,6 +95,8 @@ def infer_layer(g: nx.Graph[_V], anyflow: Mapping[_V, _V | AbstractSet[_V]]) -> 
         Simple graph representing MBQC pattern.
     anyflow : `tuple` of flow-like/layer
         Flow to verify. Compatible with both flow and generalized flow.
+    pplane : `collections.abc.Mapping`, optional
+        Measurement plane or Pauli index. If provided, `anyflow` is treated as Pauli flow.
 
     Notes
     -----
@@ -69,11 +104,12 @@ def infer_layer(g: nx.Graph[_V], anyflow: Mapping[_V, _V | AbstractSet[_V]]) -> 
     """
     gd: nx.DiGraph[_V] = nx.DiGraph()
     gd.add_nodes_from(g.nodes)
+    special = _special_edges(g, anyflow, pplane)
     for u, fu_ in anyflow.items():
         fu = fu_ if isinstance(fu_, AbstractSet) else {fu_}
         fu_odd = _common.odd_neighbors(g, fu)
         for v in itertools.chain(fu, fu_odd):
-            if u == v:
+            if u == v or (u, v) in special:
                 continue
             gd.add_edge(u, v)
     gd = gd.reverse()
