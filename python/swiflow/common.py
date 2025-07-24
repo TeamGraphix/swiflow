@@ -96,7 +96,7 @@ def infer_layer(
     anyflow : `tuple` of flow-like/layer
         Flow to verify. Compatible with both flow and generalized flow.
     pplane : `collections.abc.Mapping`, optional
-        Measurement plane or Pauli index. If provided, `anyflow` is treated as Pauli flow.
+        Measurement plane or Pauli index. If provided, :py:obj:`anyflow` is treated as Pauli flow.
 
     Notes
     -----
