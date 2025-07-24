@@ -37,5 +37,5 @@ jobs:
         run: |
           # Test with minimal dependencies
           uv sync
-          uv pip install pytest
+          uv pip install pytest tomli
           uv run pytest

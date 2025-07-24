@@ -1,6 +1,6 @@
 //! Maximally-delayed generalized flow algorithm.
 
-use std::iter;
+use core::iter;
 
 use fixedbitset::FixedBitSet;
 use hashbrown;
@@ -8,10 +8,11 @@ use pyo3::prelude::*;
 
 use crate::{
     common::{
+        FATAL_MSG,
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPlane, InvalidMeasurementSpec,
         },
-        Graph, Layer, Nodes, OrderedNodes, FATAL_MSG,
+        Graph, Layer, Nodes, OrderedNodes,
     },
     internal::{
         gf2_linalg::GF2Solver,
@@ -149,7 +150,8 @@ fn init_work(
 /// - Arguments are **NOT** verified.
 #[pyfunction]
 #[tracing::instrument]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
+#[inline]
 pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow, Layer)> {
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
@@ -243,7 +245,8 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
 /// - If `gflow` is invalid.
 /// - If `gflow` is inconsistent with `g`.
 #[pyfunction]
-#[allow(clippy::needless_pass_by_value)]
+#[expect(clippy::needless_pass_by_value)]
+#[inline]
 pub fn verify(
     gflow: (GFlow, Layer),
     g: Graph,

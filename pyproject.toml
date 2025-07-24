@@ -44,13 +44,13 @@ dev = [
   "pytest",
   "pytest-cov",
   "ruff",
+  "tomli",
   "types-networkx",
 ]
 doc = ["furo", "sphinxcontrib-bibtex", "sphinx"]
 
 [tool.maturin]
 exclude = [
-  "Pipfile",
   "docs/**",
   "examples/**",
   "rustfmt.toml",
@@ -66,6 +66,13 @@ python-source = "python"
 python_version = "3.9"
 strict = true
 files = ["docs/source/conf.py", "examples", "python", "tests"]
+
+[tool.pyright]
+reportUnknownArgumentType = "information"
+reportUnknownLambdaType = "information"
+reportUnknownMemberType = "information"
+reportUnknownParameterType = "information"
+reportUnknownVariableType = "information"
 
 [tool.ruff]
 extend-include = ["*.ipynb"]
