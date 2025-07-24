@@ -31,3 +31,7 @@ test-log = { version = "0.2", features = ["trace"] }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
