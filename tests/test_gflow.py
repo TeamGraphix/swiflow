@@ -10,7 +10,7 @@ from tests.assets import CASES, FlowTestCase
 
 @pytest.mark.parametrize("c", CASES)
 @pytest.mark.parametrize("opt", [True, False])
-def test_gflow_graphix(c: FlowTestCase, *, opt: bool) -> None:
+def test_gflow(c: FlowTestCase, *, opt: bool) -> None:
     result = gflow.find(c.g, c.iset, c.oset, plane=c.plane)
     assert result == c.gflow
     if result is not None:

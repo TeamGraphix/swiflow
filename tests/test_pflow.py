@@ -11,7 +11,7 @@ from tests.assets import CASES, FlowTestCase
 @pytest.mark.filterwarnings("ignore:No Pauli measurement found")
 @pytest.mark.parametrize("c", CASES)
 @pytest.mark.parametrize("opt", [True, False])
-def test_pflow_graphix(c: FlowTestCase, *, opt: bool) -> None:
+def test_pflow(c: FlowTestCase, *, opt: bool) -> None:
     result = pflow.find(c.g, c.iset, c.oset, pplane=c.pplane)
     assert result == c.pflow
     if result is not None:

@@ -169,4 +169,44 @@ CASE8 = FlowTestCase(
     ({0: {0, 2, 4}, 1: {1, 2}, 2: {4}}, {0: 1, 1: 1, 2: 1, 3: 0, 4: 0}),
 )
 
-CASES: tuple[FlowTestCase, ...] = (CASE0, CASE1, CASE2, CASE3, CASE4, CASE5, CASE6, CASE7, CASE8)
+# 1 - 2
+#
+# 3 - 4
+CASE9 = FlowTestCase(
+    nx.Graph([(1, 2), (3, 4)]),
+    {1},
+    {2},
+    None,
+    None,
+    # None exists as 3 - 4 is isolated
+    None,
+    None,
+    None,
+)
+
+# 1 - 2 - 3
+CASE10 = FlowTestCase(
+    nx.Graph([(1, 2), (2, 3)]),
+    {1},
+    set(),
+    None,
+    None,
+    # None exists as oset is empty
+    None,
+    None,
+    None,
+)
+
+CASES: tuple[FlowTestCase, ...] = (
+    CASE0,
+    CASE1,
+    CASE2,
+    CASE3,
+    CASE4,
+    CASE5,
+    CASE6,
+    CASE7,
+    CASE8,
+    CASE9,
+    CASE10,
+)
