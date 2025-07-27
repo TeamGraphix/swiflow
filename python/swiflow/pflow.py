@@ -7,7 +7,8 @@ See :footcite:t:`Simons2021` for details.
 from __future__ import annotations
 
 import warnings
-from collections.abc import Hashable
+from collections.abc import Hashable, Mapping
+from collections.abc import Set as AbstractSet
 from typing import TYPE_CHECKING, TypeVar
 
 from swiflow import _common
@@ -16,9 +17,6 @@ from swiflow._impl import pflow as pflow_bind
 from swiflow.common import Layer, PFlow, PPlane
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-    from collections.abc import Set as AbstractSet
-
     import networkx as nx
 
 _V = TypeVar("_V", bound=Hashable)
@@ -78,8 +76,12 @@ def find(
     return None
 
 
+_PFlow = Mapping[_V, AbstractSet[_V]]
+_Layer = Mapping[_V, int]
+
+
 def verify(
-    pflow: tuple[Mapping[_V, AbstractSet[_V]], Mapping[_V, int]],
+    pflow: tuple[_PFlow[_V], _Layer[_V]] | _PFlow[_V],
     g: nx.Graph[_V],
     iset: AbstractSet[_V],
     oset: AbstractSet[_V],
@@ -91,8 +93,9 @@ def verify(
 
     Parameters
     ----------
-    pflow : `tuple` of Pauli flow/layer
+    pflow : Pauli flow (required) and layer (optional)
         Pauli flow to verify.
+        Layer is automatically computed if omitted.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.
     iset : `collections.abc.Set`
@@ -111,7 +114,11 @@ def verify(
         If the graph is invalid or verification fails.
     """
     _common.check_graph(g, iset, oset)
-    f, layer = pflow
+    if isinstance(pflow, tuple):
+        f, layer = pflow
+    else:
+        f = pflow
+        layer = _common.infer_layer(g, pflow, pplane)
     if ensure_optimal:
         _common.check_layer(layer)
     vset = g.nodes

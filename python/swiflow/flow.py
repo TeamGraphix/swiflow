@@ -6,7 +6,7 @@ See :footcite:t:`Mhalla2008` for details.
 
 from __future__ import annotations
 
-from collections.abc import Hashable
+from collections.abc import Hashable, Mapping
 from typing import TYPE_CHECKING, TypeVar
 
 from swiflow import _common
@@ -15,7 +15,6 @@ from swiflow._impl import flow as flow_bind
 from swiflow.common import Flow, Layer
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
     from collections.abc import Set as AbstractSet
 
     import networkx as nx
@@ -57,8 +56,12 @@ def find(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -> FlowR
     return None
 
 
+_Flow = Mapping[_V, _V]
+_Layer = Mapping[_V, int]
+
+
 def verify(
-    flow: tuple[Mapping[_V, _V], Mapping[_V, int]],
+    flow: tuple[_Flow[_V], _Layer[_V]] | _Flow[_V],
     g: nx.Graph[_V],
     iset: AbstractSet[_V],
     oset: AbstractSet[_V],
@@ -69,8 +72,9 @@ def verify(
 
     Parameters
     ----------
-    flow : `tuple` of flow/layer
+    flow : flow (required) and layer (optional)
         Flow to verify.
+        Layer is automatically computed if omitted.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.
     iset : `collections.abc.Set`
@@ -86,7 +90,7 @@ def verify(
         If the graph is invalid or verification fails.
     """
     _common.check_graph(g, iset, oset)
-    f, layer = flow
+    f, layer = flow if isinstance(flow, tuple) else (flow, _common.infer_layer(g, flow))
     if ensure_optimal:
         _common.check_layer(layer)
     vset = g.nodes
