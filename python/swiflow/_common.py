@@ -301,6 +301,7 @@ class IndexMap(Generic[_V]):
 
 
 def _infer_layer_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
+    """Fix flow layers one by one depending on order constraints."""
     pred = {u: set(gd.predecessors(u)) for u in gd.nodes}
     work = {u for u, pu in pred.items() if not pu}
     ret: dict[_V, int] = {}
@@ -322,6 +323,20 @@ def _infer_layer_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
     return ret
 
 
+def _is_special(
+    pp: PPlane | None,
+    in_fu: bool,  # noqa: FBT001
+    in_fu_odd: bool,  # noqa: FBT001
+) -> bool:
+    if pp == PPlane.X:
+        return in_fu
+    if pp == PPlane.Y:
+        return in_fu and in_fu_odd
+    if pp == PPlane.Z:
+        return in_fu_odd
+    return False
+
+
 def _special_edges(
     g: nx.Graph[_V],
     anyflow: Mapping[_V, _V | AbstractSet[_V]],
@@ -337,17 +352,8 @@ def _special_edges(
         for v in itertools.chain(fu, fu_odd):
             if u == v:
                 continue
-            if (pp := pplane.get(v)) is None:
-                continue
-            if pp == PPlane.X and v in fu:
+            if _is_special(pplane.get(v), v in fu, v in fu_odd):
                 ret.add((u, v))
-                continue
-            if pp == PPlane.Y and v in fu and v in fu_odd:
-                ret.add((u, v))
-                continue
-            if pp == PPlane.Z and v in fu_odd:
-                ret.add((u, v))
-                continue
     return ret
 
 
@@ -356,7 +362,7 @@ def infer_layer(
     anyflow: Mapping[_V, _V | AbstractSet[_V]],
     pplane: Mapping[_V, PPlane] | None = None,
 ) -> Mapping[_V, int]:
-    """Infer layer from flow/gflow.
+    """Infer layer from flow/gflow using greedy algorithm.
 
     Parameters
     ----------
@@ -365,11 +371,11 @@ def infer_layer(
     anyflow : `tuple` of flow-like/layer
         Flow to verify. Compatible with both flow and generalized flow.
     pplane : `collections.abc.Mapping`, optional
-        Measurement plane or Pauli index. If provided, :py:obj:`anyflow` is treated as Pauli flow.
+        Measurement plane or Pauli index.
 
     Notes
     -----
-    This function is based on greedy algorithm.
+    This function operates in Pauli flow mode only when :py:obj`pplane` is explicitly given.
     """
     gd: nx.DiGraph[_V] = nx.DiGraph()
     gd.add_nodes_from(g.nodes)
