@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import itertools
 from collections.abc import Callable, Hashable, Iterable, Mapping
 from collections.abc import Set as AbstractSet
 from typing import Generic, TypeVar
@@ -10,6 +11,7 @@ import networkx as nx
 from typing_extensions import ParamSpec
 
 from swiflow._impl import FlowValidationMessage
+from swiflow.common import PPlane
 
 _V = TypeVar("_V", bound=Hashable)
 
@@ -296,3 +298,88 @@ class IndexMap(Generic[_V]):
             return f(*args, **kwargs)
         except ValueError as e:
             raise self.decode_err(e) from None
+
+
+def _infer_layer_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
+    pred = {u: set(gd.predecessors(u)) for u in gd.nodes}
+    work = {u for u, pu in pred.items() if not pu}
+    ret: dict[_V, int] = {}
+    for l_now in itertools.count():
+        if not work:
+            break
+        next_work: set[_V] = set()
+        for u in work:
+            ret[u] = l_now
+            for v in gd.successors(u):
+                ent = pred[v]
+                ent.discard(u)
+                if not ent:
+                    next_work.add(v)
+        work = next_work
+    if len(ret) != len(gd):
+        msg = "Failed to determine layer for all nodes."
+        raise ValueError(msg)
+    return ret
+
+
+def _special_edges(
+    g: nx.Graph[_V],
+    anyflow: Mapping[_V, _V | AbstractSet[_V]],
+    pplane: Mapping[_V, PPlane] | None,
+) -> set[tuple[_V, _V]]:
+    """Compute special edges that can bypass partial order constraints in Pauli flow."""
+    ret: set[tuple[_V, _V]] = set()
+    if pplane is None:
+        return ret
+    for u, fu_ in anyflow.items():
+        fu = fu_ if isinstance(fu_, AbstractSet) else {fu_}
+        fu_odd = odd_neighbors(g, fu)
+        for v in itertools.chain(fu, fu_odd):
+            if u == v:
+                continue
+            if (pp := pplane.get(v)) is None:
+                continue
+            if pp == PPlane.X and v in fu:
+                ret.add((u, v))
+                continue
+            if pp == PPlane.Y and v in fu and v in fu_odd:
+                ret.add((u, v))
+                continue
+            if pp == PPlane.Z and v in fu_odd:
+                ret.add((u, v))
+                continue
+    return ret
+
+
+def infer_layer(
+    g: nx.Graph[_V],
+    anyflow: Mapping[_V, _V | AbstractSet[_V]],
+    pplane: Mapping[_V, PPlane] | None = None,
+) -> Mapping[_V, int]:
+    """Infer layer from flow/gflow.
+
+    Parameters
+    ----------
+    g : `networkx.Graph`
+        Simple graph representing MBQC pattern.
+    anyflow : `tuple` of flow-like/layer
+        Flow to verify. Compatible with both flow and generalized flow.
+    pplane : `collections.abc.Mapping`, optional
+        Measurement plane or Pauli index. If provided, :py:obj:`anyflow` is treated as Pauli flow.
+
+    Notes
+    -----
+    This function is based on greedy algorithm.
+    """
+    gd: nx.DiGraph[_V] = nx.DiGraph()
+    gd.add_nodes_from(g.nodes)
+    special = _special_edges(g, anyflow, pplane)
+    for u, fu_ in anyflow.items():
+        fu = fu_ if isinstance(fu_, AbstractSet) else {fu_}
+        fu_odd = odd_neighbors(g, fu)
+        for v in itertools.chain(fu, fu_odd):
+            if u == v or (u, v) in special:
+                continue
+            gd.add_edge(u, v)
+    gd = gd.reverse()
+    return _infer_layer_impl(gd)
