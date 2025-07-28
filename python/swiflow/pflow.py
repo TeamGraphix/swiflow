@@ -118,7 +118,7 @@ def verify(
         f, layer = pflow
     else:
         f = pflow
-        layer = _common.infer_layer(g, pflow, pplane)
+        layer = _common.infer_layers(g, pflow, pplane)
     if ensure_optimal:
         _common.check_layer(layer)
     vset = g.nodes

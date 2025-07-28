@@ -141,17 +141,17 @@ class TestInferLayer:
     def test_line(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 3)])
         flow = {0: {1}, 1: {2}, 2: {3}}
-        layer = _common.infer_layer(g, flow)
+        layer = _common.infer_layers(g, flow)
         assert layer == {0: 3, 1: 2, 2: 1, 3: 0}
 
     def test_dag(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 2), (0, 3), (1, 2), (1, 3)])
         flow = {0: {2, 3}, 1: {2, 3}}
-        layer = _common.infer_layer(g, flow)
+        layer = _common.infer_layers(g, flow)
         assert layer == {0: 1, 1: 1, 2: 0, 3: 0}
 
     def test_cycle(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 0)])
         flow = {0: {1}, 1: {2}, 2: {0}}
         with pytest.raises(ValueError, match=r".*determine.*"):
-            _common.infer_layer(g, flow)
+            _common.infer_layers(g, flow)

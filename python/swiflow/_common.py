@@ -300,7 +300,7 @@ class IndexMap(Generic[_V]):
             raise self.decode_err(e) from None
 
 
-def _infer_layer_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
+def _infer_layers_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
     """Fix flow layers one by one depending on order constraints."""
     pred = {u: set(gd.predecessors(u)) for u in gd.nodes}
     work = {u for u, pu in pred.items() if not pu}
@@ -357,7 +357,7 @@ def _special_edges(
     return ret
 
 
-def infer_layer(
+def infer_layers(
     g: nx.Graph[_V],
     anyflow: Mapping[_V, _V | AbstractSet[_V]],
     pplane: Mapping[_V, PPlane] | None = None,
@@ -388,4 +388,4 @@ def infer_layer(
                 continue
             gd.add_edge(u, v)
     gd = gd.reverse()
-    return _infer_layer_impl(gd)
+    return _infer_layers_impl(gd)

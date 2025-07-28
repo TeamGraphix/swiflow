@@ -90,7 +90,7 @@ def verify(
         If the graph is invalid or verification fails.
     """
     _common.check_graph(g, iset, oset)
-    f, layer = flow if isinstance(flow, tuple) else (flow, _common.infer_layer(g, flow))
+    f, layer = flow if isinstance(flow, tuple) else (flow, _common.infer_layers(g, flow))
     if ensure_optimal:
         _common.check_layer(layer)
     vset = g.nodes
