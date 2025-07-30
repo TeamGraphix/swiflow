@@ -487,7 +487,7 @@ mod tests {
         assert_eq!(
             check_def_layer(
                 &map! { 0: set!{1} },
-                &vec![0, 0],
+                &[0, 0],
                 &test_utils::graph(&[(0, 1)]),
                 &map! { 0: PPlane::XY },
             ),
@@ -497,7 +497,7 @@ mod tests {
         assert_eq!(
             check_def_layer(
                 &map! { 0: set!{2}, 1: set!{2} },
-                &vec![1, 1, 0],
+                &[1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)]),
                 &map! {
                     0: PPlane::XY,
@@ -510,7 +510,7 @@ mod tests {
         assert_eq!(
             check_def_layer(
                 &map! { 0: set!{1}, 1: set!{2} },
-                &vec![1, 1, 0],
+                &[1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)]),
                 &map! { 0: PPlane::XY, 1: PPlane::Y },
             ),

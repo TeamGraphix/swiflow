@@ -157,14 +157,14 @@ mod tests {
     fn test_check_definition_ng() {
         // Violate 0 -> f(0) = 1
         assert_eq!(
-            check_def_layer(&map! { 0: 1 }, &vec![0, 0], &test_utils::graph(&[(0, 1)])),
+            check_def_layer(&map! { 0: 1 }, &[0, 0], &test_utils::graph(&[(0, 1)])),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate 1 in nb(f(0)) = nb(2) => 0 == 1 or 0 -> 1
         assert_eq!(
             check_def_layer(
                 &map! { 0: 2 },
-                &vec![1, 1, 0],
+                &[1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)])
             ),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
