@@ -12,5 +12,4 @@ def verify(
     iset: set[int],
     oset: set[int],
     plane: dict[int, Plane],
-    optimal: bool,
 ) -> None: ...

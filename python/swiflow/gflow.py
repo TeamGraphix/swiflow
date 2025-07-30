@@ -79,7 +79,6 @@ def verify(
     oset: AbstractSet[_V],
     *,
     plane: Mapping[_V, Plane] | None = None,
-    ensure_optimal: bool = False,
 ) -> None:
     r"""Verify generalized flow.
 
@@ -97,8 +96,6 @@ def verify(
     plane : `collections.abc.Mapping`
         Measurement plane for each node in :math:`V \setminus O`.
         Defaults to `Plane.XY`.
-    ensure_optimal : `bool`
-        Whether the gflow should be maximally-delayed. Defaults to `False`.
 
     Raises
     ------
@@ -107,8 +104,6 @@ def verify(
     """
     _common.check_graph(g, iset, oset)
     f, layer = gflow if isinstance(gflow, tuple) else (gflow, _common.infer_layers(g, gflow))
-    if ensure_optimal:
-        _common.check_layer(layer)
     vset = g.nodes
     if plane is None:
         plane = dict.fromkeys(vset - oset, Plane.XY)
@@ -119,4 +114,4 @@ def verify(
     plane_ = codec.encode_dictkey(plane)
     f_ = codec.encode_gflow(f)
     layer_ = codec.encode_layer(layer)
-    codec.ecatch(gflow_bind.verify, (f_, layer_), g_, iset_, oset_, plane_, ensure_optimal)
+    codec.ecatch(gflow_bind.verify, (f_, layer_), g_, iset_, oset_, plane_)

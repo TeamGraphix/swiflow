@@ -47,17 +47,6 @@ def test_check_planelike_ng() -> None:
         _common.check_planelike({"a", "b"}, {"b"}, {})
 
 
-def test_check_layer() -> None:
-    _common.check_layer({"a": 0, "b": 1, "c": 2})
-    _common.check_layer({})
-
-    with pytest.raises(ValueError, match=r".*must be 0.*"):
-        _common.check_layer({"a": 1, "b": 2})
-
-    with pytest.raises(ValueError, match=r".*must be 0.*"):
-        _common.check_layer({"a": -1, "b": 0})
-
-
 @pytest.fixture
 def fx_indexmap() -> IndexMap[str]:
     return IndexMap({"a", "b", "c"})

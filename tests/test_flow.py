@@ -7,12 +7,11 @@ from tests.assets import CASES, FlowTestCase
 
 
 @pytest.mark.parametrize("c", CASES)
-@pytest.mark.parametrize("opt", [True, False])
-def test_flow(c: FlowTestCase, *, opt: bool) -> None:
+def test_flow(c: FlowTestCase) -> None:
     result = flow.find(c.g, c.iset, c.oset)
     assert result == c.flow
     if result is not None:
-        flow.verify(result, c.g, c.iset, c.oset, ensure_optimal=opt)
+        flow.verify(result, c.g, c.iset, c.oset)
 
 
 @pytest.mark.parametrize("c", CASES)

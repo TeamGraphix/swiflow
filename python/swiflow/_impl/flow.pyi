@@ -4,5 +4,4 @@ def verify(
     g: list[set[int]],
     iset: set[int],
     oset: set[int],
-    optimal: bool,
 ) -> None: ...

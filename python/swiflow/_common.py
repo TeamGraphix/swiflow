@@ -84,13 +84,6 @@ def check_planelike(vset: AbstractSet[_V], oset: AbstractSet[_V], plike: Mapping
         raise ValueError(msg)
 
 
-def check_layer(layer: Mapping[_V, int]) -> None:
-    """Check if layer range is compatible with the current implementation."""
-    if min(layer.values(), default=0) != 0:
-        msg = "Minimum layer must be 0."
-        raise ValueError(msg)
-
-
 def odd_neighbors(g: nx.Graph[_V], kset: AbstractSet[_V]) -> set[_V]:
     """Compute odd neighbors of `kset` in `g`."""
     ret: set[_V] = set()

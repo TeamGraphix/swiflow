@@ -65,8 +65,6 @@ def verify(
     g: nx.Graph[_V],
     iset: AbstractSet[_V],
     oset: AbstractSet[_V],
-    *,
-    ensure_optimal: bool = False,
 ) -> None:
     """Verify causal flow.
 
@@ -81,8 +79,6 @@ def verify(
         Input nodes.
     oset : `collections.abc.Set`
         Output nodes.
-    ensure_optimal : `bool`
-        Whether the flow should be maximally-delayed. Defaults to `False`.
 
     Raises
     ------
@@ -91,8 +87,6 @@ def verify(
     """
     _common.check_graph(g, iset, oset)
     f, layer = flow if isinstance(flow, tuple) else (flow, _common.infer_layers(g, flow))
-    if ensure_optimal:
-        _common.check_layer(layer)
     vset = g.nodes
     codec = IndexMap(vset)
     g_ = codec.encode_graph(g)
@@ -100,4 +94,4 @@ def verify(
     oset_ = codec.encode_set(oset)
     f_ = codec.encode_flow(f)
     layer_ = codec.encode_layer(layer)
-    codec.ecatch(flow_bind.verify, (f_, layer_), g_, iset_, oset_, ensure_optimal)
+    codec.ecatch(flow_bind.verify, (f_, layer_), g_, iset_, oset_)
