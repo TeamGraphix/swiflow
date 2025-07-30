@@ -38,7 +38,7 @@ type GFlow = hashbrown::HashMap<usize, Nodes>;
 /// - XY: i not in g(i) and in Odd(g(i))
 /// - YZ: i in g(i) and in Odd(g(i))
 /// - XZ: i in g(i) and not in Odd(g(i))
-fn check_def_geom(f: &GFlow, g: &Graph, planes: &Planes) -> Result<(), FlowValidationError> {
+fn check_def_geom(f: &GFlow, g: &[Nodes], planes: &Planes) -> Result<(), FlowValidationError> {
     for &i in itertools::chain(f.keys(), planes.keys()) {
         if f.contains_key(&i) != planes.contains_key(&i) {
             Err(InvalidMeasurementSpec { node: i })?;
@@ -77,7 +77,7 @@ fn check_def_geom(f: &GFlow, g: &Graph, planes: &Planes) -> Result<(), FlowValid
 ///
 /// - i -> g(i)
 /// - j in Odd(g(i)) => i == j or i -> j
-fn check_def_layer(f: &GFlow, layer: &Layer, g: &Graph) -> Result<(), FlowValidationError> {
+fn check_def_layer(f: &GFlow, layer: &[usize], g: &[Nodes]) -> Result<(), FlowValidationError> {
     for (&i, fi) in f {
         for &fij in fi {
             if i != fij && layer[i] <= layer[fij] {
@@ -97,7 +97,7 @@ fn check_def_layer(f: &GFlow, layer: &Layer, g: &Graph) -> Result<(), FlowValida
 /// Initializes the working matrix.
 fn init_work(
     work: &mut [FixedBitSet],
-    g: &Graph,
+    g: &[Nodes],
     planes: &Planes,
     ocset: &OrderedNodes,
     omiset: &OrderedNodes,

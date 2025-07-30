@@ -17,7 +17,7 @@ type Flow = hashbrown::HashMap<usize, usize>;
 /// Checks the geometric constraints of flow.
 ///
 /// - i in N(f(i))
-fn check_def_geom(f: &Flow, g: &Graph) -> Result<(), FlowValidationError> {
+fn check_def_geom(f: &Flow, g: &[Nodes]) -> Result<(), FlowValidationError> {
     for (&i, &fi) in f {
         if !g[i].contains(&fi) {
             Err(InconsistentFlowOrder { nodes: (i, fi) })?;
@@ -30,7 +30,7 @@ fn check_def_geom(f: &Flow, g: &Graph) -> Result<(), FlowValidationError> {
 ///
 /// - i -> f(i)
 /// - j in N(f(i)) => i == j or i -> j
-fn check_def_layer(f: &Flow, layer: &Layer, g: &Graph) -> Result<(), FlowValidationError> {
+fn check_def_layer(f: &Flow, layer: &[usize], g: &[Nodes]) -> Result<(), FlowValidationError> {
     for (&i, &fi) in f {
         if layer[i] <= layer[fi] {
             Err(InconsistentFlowOrder { nodes: (i, fi) })?;

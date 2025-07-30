@@ -8,7 +8,7 @@ use crate::common::{
     FlowValidationError::{
         self, ExcessiveNonZeroLayer, ExcessiveZeroLayer, InvalidFlowCodomain, InvalidFlowDomain,
     },
-    Layer, Nodes,
+    Nodes,
 };
 
 /// Checks if the layer-zero nodes are correctly chosen.
@@ -20,7 +20,7 @@ use crate::common::{
 /// - `layer`: The layer.
 /// - `oset`: The set of output nodes.
 /// - `iff`: If `true`, `layer[u] == 0` "iff" `u` is in `oset`. Otherwise "if".
-pub fn check_initial(layer: &Layer, oset: &Nodes, iff: bool) -> Result<(), FlowValidationError> {
+pub fn check_initial(layer: &[usize], oset: &Nodes, iff: bool) -> Result<(), FlowValidationError> {
     for (u, &lu) in layer.iter().enumerate() {
         match (oset.contains(&u), lu == 0) {
             (true, false) => {

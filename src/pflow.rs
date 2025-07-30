@@ -37,7 +37,7 @@ type PPlanes = hashbrown::HashMap<usize, PPlane>;
 type PFlow = hashbrown::HashMap<usize, Nodes>;
 
 /// Checks the geometric constraints of pflow.
-fn check_def_geom(f: &PFlow, g: &Graph, pplanes: &PPlanes) -> Result<(), FlowValidationError> {
+fn check_def_geom(f: &PFlow, g: &[Nodes], pplanes: &PPlanes) -> Result<(), FlowValidationError> {
     for &i in itertools::chain(f.keys(), pplanes.keys()) {
         if f.contains_key(&i) != pplanes.contains_key(&i) {
             Err(InvalidMeasurementSpec { node: i })?;
@@ -93,8 +93,8 @@ fn check_def_geom(f: &PFlow, g: &Graph, pplanes: &PPlanes) -> Result<(), FlowVal
 /// Checks the layer constraints of pflow.
 fn check_def_layer(
     f: &PFlow,
-    layer: &Layer,
-    g: &Graph,
+    layer: &[usize],
+    g: &[Nodes],
     pplanes: &PPlanes,
 ) -> Result<(), FlowValidationError> {
     for (&i, fi) in f {
@@ -139,7 +139,7 @@ fn matching_nodes(src: &PPlanes, mut pred: impl FnMut(&PPlane) -> bool) -> Nodes
 /// Initializes the upper block of working storage.
 fn init_work_upper_co(
     work: &mut [FixedBitSet],
-    g: &Graph,
+    g: &[Nodes],
     rowset: &OrderedNodes,
     colset: &OrderedNodes,
 ) {
@@ -157,7 +157,7 @@ fn init_work_upper_co(
 /// Initializes the lower block of working storage.
 fn init_work_lower_co(
     work: &mut [FixedBitSet],
-    g: &Graph,
+    g: &[Nodes],
     rowset: &OrderedNodes,
     colset: &OrderedNodes,
 ) {
@@ -185,7 +185,7 @@ const BRANCH_XZ: BranchKind = 2;
 fn init_work_upper_rhs<const K: BranchKind>(
     work: &mut [FixedBitSet],
     u: usize,
-    g: &Graph,
+    g: &[Nodes],
     rowset: &OrderedNodes,
     colset: &OrderedNodes,
 ) {
@@ -215,7 +215,7 @@ fn init_work_upper_rhs<const K: BranchKind>(
 fn init_work_lower_rhs<const K: BranchKind>(
     work: &mut [FixedBitSet],
     u: usize,
-    g: &Graph,
+    g: &[Nodes],
     rowset: &OrderedNodes,
     colset: &OrderedNodes,
 ) {
@@ -239,7 +239,7 @@ fn init_work_lower_rhs<const K: BranchKind>(
 fn init_work<const K: BranchKind>(
     work: &mut [FixedBitSet],
     u: usize,
-    g: &Graph,
+    g: &[Nodes],
     rowset_upper: &OrderedNodes,
     rowset_lower: &OrderedNodes,
     colset: &OrderedNodes,
@@ -273,7 +273,7 @@ fn decode_solution<const K: BranchKind>(u: usize, x: &FixedBitSet, colset: &Orde
 #[derive(Debug)]
 struct PFlowContext<'a> {
     work: &'a mut Vec<FixedBitSet>,
-    g: &'a Graph,
+    g: &'a [Nodes],
     u: usize,
     rowset_upper: &'a OrderedNodes,
     rowset_lower: &'a OrderedNodes,
