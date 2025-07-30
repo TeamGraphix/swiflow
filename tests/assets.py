@@ -19,8 +19,8 @@ class FlowTestCase:
     g: nx.Graph[int]
     iset: set[int]
     oset: set[int]
-    plane: dict[int, Plane] | None
-    pplane: dict[int, PPlane] | None
+    planes: dict[int, Plane] | None
+    pplanes: dict[int, PPlane] | None
     flow: FlowResult[int] | None
     gflow: GFlowResult[int] | None
     pflow: PFlowResult[int] | None

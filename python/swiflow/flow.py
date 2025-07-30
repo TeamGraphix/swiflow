@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, TypeVar
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import flow as flow_bind
-from swiflow.common import Flow, Layer
+from swiflow.common import Flow, Layers
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     import networkx as nx
 
 _V = TypeVar("_V", bound=Hashable)
-FlowResult = tuple[Flow[_V], Layer[_V]]
+FlowResult = tuple[Flow[_V], Layers[_V]]
 
 
 def find(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -> FlowResult[_V] | None:
@@ -39,7 +39,7 @@ def find(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -> FlowR
 
     Returns
     -------
-    `tuple` of flow/layer or `None`
+    `tuple` of flow/layers or `None`
         Return the flow if any, otherwise `None`.
     """
     _common.check_graph(g, iset, oset)
@@ -49,10 +49,10 @@ def find(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -> FlowR
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
     if ret_ := flow_bind.find(g_, iset_, oset_):
-        f_, layer_ = ret_
+        f_, layers_ = ret_
         f = codec.decode_flow(f_)
-        layer = codec.decode_layer(layer_)
-        return f, layer
+        layers = codec.decode_layers(layers_)
+        return f, layers
     return None
 
 
@@ -65,8 +65,8 @@ def _codec_wrap(
     flow: tuple[_Flow[_V], _Layer[_V]] | _Flow[_V],
 ) -> tuple[dict[int, int], list[int] | None]:
     if isinstance(flow, tuple):
-        f, layer = flow
-        return codec.encode_flow(f), codec.encode_layer(layer)
+        f, layers = flow
+        return codec.encode_flow(f), codec.encode_layers(layers)
     return codec.encode_flow(flow), None
 
 
@@ -80,7 +80,7 @@ def verify(
 
     Parameters
     ----------
-    flow : flow (required) and layer (optional)
+    flow : flow (required) and layers (optional)
         Flow to verify.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.

@@ -22,7 +22,7 @@ iset = {0, 1}
 oset = {4, 5}
 planes = {0: Plane.XY, 1: Plane.XY, 2: Plane.XZ, 3: Plane.YZ}
 
-result = gflow.find(g, iset, oset, plane=planes)
+result = gflow.find(g, iset, oset, planes=planes)
 
 # Found
 assert result is not None

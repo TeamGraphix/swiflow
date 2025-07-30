@@ -20,5 +20,5 @@ def test_infer_verify(c: FlowTestCase) -> None:
         pytest.skip()
     f, _ = c.flow
     flow.verify(f, c.g, c.iset, c.oset)
-    layer = common.infer_layers(c.g, f)
-    flow.verify((f, layer), c.g, c.iset, c.oset)
+    layers = common.infer_layers(c.g, f)
+    flow.verify((f, layers), c.g, c.iset, c.oset)

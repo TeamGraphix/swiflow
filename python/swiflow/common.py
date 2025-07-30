@@ -27,8 +27,8 @@ GFlow = dict[_V, set[_V]]
 PFlow = dict[_V, set[_V]]
 """Pauli flow map as a dictionary. :math:`f(u)` is stored in :py:obj:`f[u]`."""
 
-Layer = dict[_V, int]
-r"""Layer of each node representing the partial order. :math:`layer(u) > layer(v)` implies :math:`u \prec v`.
+Layers = dict[_V, int]
+r"""Layer of each node representing the partial order. :math:`layers(u) > layers(v)` implies :math:`u \prec v`.
 """
 
 
@@ -54,7 +54,7 @@ def _infer_layers_impl(pred: Mapping[_V, MutableSet[_V]], succ: Mapping[_V, Abst
                     next_work.add(v)
         work = next_work
     if len(ret) != len(succ):
-        msg = "Failed to determine layer for all nodes."
+        msg = "Failed to determine layers for all nodes."
         raise ValueError(msg)
     return ret
 
@@ -76,11 +76,11 @@ def _is_special(
 def _special_edges(
     g: nx.Graph[_V],
     anyflow: Mapping[_V, _V | AbstractSet[_V]],
-    pplane: Mapping[_V, PPlane] | None,
+    pplanes: Mapping[_V, PPlane] | None,
 ) -> set[tuple[_V, _V]]:
     """Compute special edges that can bypass partial order constraints in Pauli flow."""
     ret: set[tuple[_V, _V]] = set()
-    if pplane is None:
+    if pplanes is None:
         return ret
     for u, fu_ in anyflow.items():
         fu = fu_ if isinstance(fu_, AbstractSet) else {fu_}
@@ -88,7 +88,7 @@ def _special_edges(
         for v in itertools.chain(fu, fu_odd):
             if u == v:
                 continue
-            if _is_special(pplane.get(v), v in fu, v in fu_odd):
+            if _is_special(pplanes.get(v), v in fu, v in fu_odd):
                 ret.add((u, v))
     return ret
 
@@ -96,9 +96,9 @@ def _special_edges(
 def infer_layers(
     g: nx.Graph[_V],
     anyflow: Mapping[_V, _V | AbstractSet[_V]],
-    pplane: Mapping[_V, PPlane] | None = None,
+    pplanes: Mapping[_V, PPlane] | None = None,
 ) -> Mapping[_V, int]:
-    """Infer layer from flow/gflow using greedy algorithm.
+    """Infer layers from flow/gflow using greedy algorithm.
 
     Parameters
     ----------
@@ -106,14 +106,14 @@ def infer_layers(
         Simple graph representing MBQC pattern.
     anyflow : `tuple` of flow-like/layer
         Flow to verify. Compatible with both flow and generalized flow.
-    pplane : `collections.abc.Mapping`, optional
+    pplanes : `collections.abc.Mapping`, optional
         Measurement plane or Pauli index.
 
     Notes
     -----
-    This function operates in Pauli flow mode only when :py:obj`pplane` is explicitly given.
+    This function operates in Pauli flow mode only when :py:obj`pplanes` is explicitly given.
     """
-    special = _special_edges(g, anyflow, pplane)
+    special = _special_edges(g, anyflow, pplanes)
     pred: dict[_V, set[_V]] = {u: set() for u in g.nodes}
     succ: dict[_V, set[_V]] = {u: set() for u in g.nodes}
     for u, fu_ in anyflow.items():

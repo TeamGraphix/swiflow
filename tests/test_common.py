@@ -100,7 +100,7 @@ class TestIndexMap:
 
     def test_encode_layer_missing(self, fx_indexmap: IndexMap[str]) -> None:
         with pytest.raises(ValueError, match=r"Layers must be specified for all nodes\."):
-            fx_indexmap.encode_layer({"a": 0, "b": 1})
+            fx_indexmap.encode_layers({"a": 0, "b": 1})
 
     def test_ecatch(self, fx_indexmap: IndexMap[str]) -> None:
         def dummy_ok(x: int) -> int:
@@ -130,14 +130,14 @@ class TestInferLayer:
     def test_line(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 3)])
         flow = {0: {1}, 1: {2}, 2: {3}}
-        layer = common.infer_layers(g, flow)
-        assert layer == {0: 3, 1: 2, 2: 1, 3: 0}
+        layers = common.infer_layers(g, flow)
+        assert layers == {0: 3, 1: 2, 2: 1, 3: 0}
 
     def test_dag(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 2), (0, 3), (1, 2), (1, 3)])
         flow = {0: {2, 3}, 1: {2, 3}}
-        layer = common.infer_layers(g, flow)
-        assert layer == {0: 1, 1: 1, 2: 0, 3: 0}
+        layers = common.infer_layers(g, flow)
+        assert layers == {0: 1, 1: 1, 2: 0, 3: 0}
 
     def test_cycle(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 0)])

@@ -12,7 +12,7 @@ use crate::{
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPlane, InvalidMeasurementSpec,
         },
-        Graph, Layer, Nodes, OrderedNodes,
+        Graph, Layers, Nodes, OrderedNodes,
     },
     internal::{
         gf2_linalg::GF2Solver,
@@ -77,16 +77,16 @@ fn check_def_geom(f: &GFlow, g: &[Nodes], planes: &Planes) -> Result<(), FlowVal
 ///
 /// - i -> g(i)
 /// - j in Odd(g(i)) => i == j or i -> j
-fn check_def_layer(f: &GFlow, layer: &[usize], g: &[Nodes]) -> Result<(), FlowValidationError> {
+fn check_def_layer(f: &GFlow, layers: &[usize], g: &[Nodes]) -> Result<(), FlowValidationError> {
     for (&i, fi) in f {
         for &fij in fi {
-            if i != fij && layer[i] <= layer[fij] {
+            if i != fij && layers[i] <= layers[fij] {
                 Err(InconsistentFlowOrder { nodes: (i, fij) })?;
             }
         }
         let odd_fi = utils::odd_neighbors(g, fi);
         for &j in &odd_fi {
-            if i != j && layer[i] <= layer[j] {
+            if i != j && layers[i] <= layers[j] {
                 Err(InconsistentFlowOrder { nodes: (i, j) })?;
             }
         }
@@ -156,7 +156,7 @@ fn init_work(
 #[tracing::instrument]
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
-pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow, Layer)> {
+pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow, Layers)> {
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     let mut cset = Nodes::new();
@@ -164,7 +164,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
     let mut ocset = vset.difference(&oset).copied().collect::<OrderedNodes>();
     let mut omiset = oset.difference(&iset).copied().collect::<OrderedNodes>();
     let mut f = GFlow::with_capacity(ocset.len());
-    let mut layer = vec![0_usize; n];
+    let mut layers = vec![0_usize; n];
     let mut nrows = ocset.len();
     let mut ncols = omiset.len();
     let mut neqs = ocset.len();
@@ -214,7 +214,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
             tracing::debug!("f({u}) = {fu:?}");
             f.insert(u, fu);
             tracing::debug!("layer({u}) = {l}");
-            layer[u] = l;
+            layers[u] = l;
         }
         if cset.is_empty() {
             break;
@@ -225,18 +225,18 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
     if ocset.is_empty() {
         tracing::debug!("gflow found");
         tracing::debug!("gflow: {f:?}");
-        tracing::debug!("layer: {layer:?}");
+        tracing::debug!("layers: {layers:?}");
         // TODO: Remove this block once stabilized
         {
             let f_flatiter = f
                 .iter()
                 .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
             validate::check_domain(f_flatiter, &vset, &iset, &oset).expect(FATAL_MSG);
-            validate::check_initial(&layer, &oset, true).expect(FATAL_MSG);
+            validate::check_initial(&layers, &oset, true).expect(FATAL_MSG);
             check_def_geom(&f, &g, &planes).expect(FATAL_MSG);
-            check_def_layer(&f, &layer, &g).expect(FATAL_MSG);
+            check_def_layer(&f, &layers, &g).expect(FATAL_MSG);
         }
-        Some((f, layer))
+        Some((f, layers))
     } else {
         tracing::debug!("gflow not found");
         None
@@ -253,13 +253,13 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
 pub fn verify(
-    gflow: (GFlow, Option<Layer>),
+    gflow: (GFlow, Option<Layers>),
     g: Graph,
     iset: Nodes,
     oset: Nodes,
     planes: Planes,
 ) -> PyResult<()> {
-    let (f, layer) = gflow;
+    let (f, layers) = gflow;
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     let f_flatiter = f
@@ -267,8 +267,8 @@ pub fn verify(
         .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
     validate::check_domain(f_flatiter, &vset, &iset, &oset)?;
     check_def_geom(&f, &g, &planes)?;
-    if let Some(layer) = layer {
-        check_def_layer(&f, &layer, &g)?;
+    if let Some(layers) = layers {
+        check_def_layer(&f, &layers, &g)?;
     }
     Ok(())
 }
@@ -364,10 +364,10 @@ mod tests {
         let TestCase { g, iset, oset } = test_utils::CASE0.clone();
         let planes = map! {};
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
-        assert_eq!(layer, vec![0, 0]);
-        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![0, 0]);
+        verify((f, Some(layers)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
@@ -380,14 +380,14 @@ mod tests {
             3: Plane::XY
         };
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], Nodes::from([1]));
         assert_eq!(f[&1], Nodes::from([2]));
         assert_eq!(f[&2], Nodes::from([3]));
         assert_eq!(f[&3], Nodes::from([4]));
-        assert_eq!(layer, vec![4, 3, 2, 1, 0]);
-        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![4, 3, 2, 1, 0]);
+        verify((f, Some(layers)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
@@ -400,14 +400,14 @@ mod tests {
             3: Plane::XY
         };
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], Nodes::from([2]));
         assert_eq!(f[&1], Nodes::from([3]));
         assert_eq!(f[&2], Nodes::from([4]));
         assert_eq!(f[&3], Nodes::from([5]));
-        assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![2, 2, 1, 1, 0, 0]);
+        verify((f, Some(layers)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
@@ -419,13 +419,13 @@ mod tests {
             2: Plane::XY
         };
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], Nodes::from([4, 5]));
         assert_eq!(f[&1], Nodes::from([3, 4, 5]));
         assert_eq!(f[&2], Nodes::from([3, 5]));
-        assert_eq!(layer, vec![1, 1, 1, 0, 0, 0]);
-        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![1, 1, 1, 0, 0, 0]);
+        verify((f, Some(layers)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
@@ -438,14 +438,14 @@ mod tests {
             3: Plane::YZ
         };
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], Nodes::from([2]));
         assert_eq!(f[&1], Nodes::from([5]));
         assert_eq!(f[&2], Nodes::from([2, 4]));
         assert_eq!(f[&3], Nodes::from([3]));
-        assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![2, 2, 1, 1, 0, 0]);
+        verify((f, Some(layers)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]

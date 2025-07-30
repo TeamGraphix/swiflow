@@ -14,13 +14,13 @@ from typing import TYPE_CHECKING, TypeVar
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import pflow as pflow_bind
-from swiflow.common import Layer, PFlow, PPlane
+from swiflow.common import Layers, PFlow, PPlane
 
 if TYPE_CHECKING:
     import networkx as nx
 
 _V = TypeVar("_V", bound=Hashable)
-PFlowResult = tuple[PFlow[_V], Layer[_V]]
+PFlowResult = tuple[PFlow[_V], Layers[_V]]
 
 
 def find(
@@ -28,7 +28,7 @@ def find(
     iset: AbstractSet[_V],
     oset: AbstractSet[_V],
     *,
-    pplane: Mapping[_V, PPlane] | None = None,
+    pplanes: Mapping[_V, PPlane] | None = None,
 ) -> PFlowResult[_V] | None:
     r"""Compute Pauli flow.
 
@@ -42,13 +42,13 @@ def find(
         Input nodes.
     oset : `collections.abc.Set`
         Output nodes.
-    pplane : `collections.abc.Mapping`
+    pplanes : `collections.abc.Mapping`
         Measurement plane or Pauli index for each node in :math:`V \setminus O`.
         Defaults to `PPlane.XY`.
 
     Returns
     -------
-    `tuple` of Pauli flow/layer or `None`
+    `tuple` of Pauli flow/layers or `None`
         Return the Pauli flow if any, otherwise `None`.
 
     Notes
@@ -57,22 +57,22 @@ def find(
     """
     _common.check_graph(g, iset, oset)
     vset = g.nodes
-    if pplane is None:
-        pplane = dict.fromkeys(vset - oset, PPlane.XY)
-    _common.check_planelike(vset, oset, pplane)
-    if all(pp not in {PPlane.X, PPlane.Y, PPlane.Z} for pp in pplane.values()):
+    if pplanes is None:
+        pplanes = dict.fromkeys(vset - oset, PPlane.XY)
+    _common.check_planelike(vset, oset, pplanes)
+    if all(pp not in {PPlane.X, PPlane.Y, PPlane.Z} for pp in pplanes.values()):
         msg = "No Pauli measurement found. Use gflow.find instead."
         warnings.warn(msg, stacklevel=1)
     codec = IndexMap(vset)
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    pplane_ = codec.encode_dictkey(pplane)
-    if ret_ := pflow_bind.find(g_, iset_, oset_, pplane_):
-        f_, layer_ = ret_
+    pplanes_ = codec.encode_dictkey(pplanes)
+    if ret_ := pflow_bind.find(g_, iset_, oset_, pplanes_):
+        f_, layers_ = ret_
         f = codec.decode_gflow(f_)
-        layer = codec.decode_layer(layer_)
-        return f, layer
+        layers = codec.decode_layers(layers_)
+        return f, layers
     return None
 
 
@@ -85,8 +85,8 @@ def _codec_wrap(
     pflow: tuple[_PFlow[_V], _Layer[_V]] | _PFlow[_V],
 ) -> tuple[dict[int, set[int]], list[int] | None]:
     if isinstance(pflow, tuple):
-        f, layer = pflow
-        return codec.encode_gflow(f), codec.encode_layer(layer)
+        f, layers = pflow
+        return codec.encode_gflow(f), codec.encode_layers(layers)
     return codec.encode_gflow(pflow), None
 
 
@@ -96,13 +96,13 @@ def verify(
     iset: AbstractSet[_V],
     oset: AbstractSet[_V],
     *,
-    pplane: Mapping[_V, PPlane] | None = None,
+    pplanes: Mapping[_V, PPlane] | None = None,
 ) -> None:
     r"""Verify Pauli flow.
 
     Parameters
     ----------
-    pflow : Pauli flow (required) and layer (optional)
+    pflow : Pauli flow (required) and layers (optional)
         Pauli flow to verify.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.
@@ -110,7 +110,7 @@ def verify(
         Input nodes.
     oset : `collections.abc.Set`
         Output nodes.
-    pplane : `collections.abc.Mapping`
+    pplanes : `collections.abc.Mapping`
         Measurement plane or Pauli index for each node in :math:`V \setminus O`.
         Defaults to `PPlane.XY`.
 
@@ -121,11 +121,11 @@ def verify(
     """
     _common.check_graph(g, iset, oset)
     vset = g.nodes
-    if pplane is None:
-        pplane = dict.fromkeys(vset - oset, PPlane.XY)
+    if pplanes is None:
+        pplanes = dict.fromkeys(vset - oset, PPlane.XY)
     codec = IndexMap(vset)
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    pplane_ = codec.encode_dictkey(pplane)
-    codec.ecatch(pflow_bind.verify, _codec_wrap(codec, pflow), g_, iset_, oset_, pplane_)
+    pplanes_ = codec.encode_dictkey(pplanes)
+    codec.ecatch(pflow_bind.verify, _codec_wrap(codec, pflow), g_, iset_, oset_, pplanes_)

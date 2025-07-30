@@ -179,19 +179,19 @@ class IndexMap(Generic[_V]):
         """
         return {self.encode(i): self.encode_set(si) for i, si in f.items()}
 
-    def encode_layer(self, layer: Mapping[_V, int]) -> list[int]:
-        """Encode layer.
+    def encode_layers(self, layers: Mapping[_V, int]) -> list[int]:
+        """Encode layers.
 
         Returns
         -------
-        `layer` values transformed.
+        `layers` values transformed.
 
         Notes
         -----
         `list` is used instead of `dict` here because no missing values are allowed here.
         """
         try:
-            return [layer[v] for v in self.__i2v]
+            return [layers[v] for v in self.__i2v]
         except KeyError:
             msg = "Layers must be specified for all nodes."
             raise ValueError(msg) from None
@@ -237,18 +237,18 @@ class IndexMap(Generic[_V]):
         """
         return {self.decode(i): self.decode_set(si) for i, si in f_.items()}
 
-    def decode_layer(self, layer_: Iterable[int]) -> dict[_V, int]:
-        """Decode MBQC layer.
+    def decode_layers(self, layers_: Iterable[int]) -> dict[_V, int]:
+        """Decode MBQC layers.
 
         Returns
         -------
-        `layer_` transformed.
+        `layers_` transformed.
 
         Notes
         -----
         `list` (generalized as `Iterable`) is used instead of `dict` here because no missing values are allowed here.
         """
-        return {self.decode(i): li for i, li in enumerate(layer_)}
+        return {self.decode(i): li for i, li in enumerate(layers_)}
 
     def decode_err(self, err: ValueError) -> ValueError:
         """Decode the error message stored in the first ctor argument of ValueError."""
