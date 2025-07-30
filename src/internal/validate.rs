@@ -8,18 +8,20 @@ use crate::common::{
     FlowValidationError::{
         self, ExcessiveNonZeroLayer, ExcessiveZeroLayer, InvalidFlowCodomain, InvalidFlowDomain,
     },
-    Layer, Nodes,
+    Nodes,
 };
 
 /// Checks if the layer-zero nodes are correctly chosen.
 ///
+/// This check can be skipped unless maximally-delayed flow is required.
+///
 /// # Arguments
 ///
-/// - `layer`: The layer.
+/// - `layers`: The layer.
 /// - `oset`: The set of output nodes.
-/// - `iff`: If `true`, `layer[u] == 0` "iff" `u` is in `oset`. Otherwise "if".
-pub fn check_initial(layer: &Layer, oset: &Nodes, iff: bool) -> Result<(), FlowValidationError> {
-    for (u, &lu) in layer.iter().enumerate() {
+/// - `iff`: If `true`, `layers[u] == 0` "iff" `u` is in `oset`. Otherwise "if".
+pub fn check_initial(layers: &[usize], oset: &Nodes, iff: bool) -> Result<(), FlowValidationError> {
+    for (u, &lu) in layers.iter().enumerate() {
         match (oset.contains(&u), lu == 0) {
             (true, false) => {
                 Err(ExcessiveNonZeroLayer { node: u, layer: lu })?;
@@ -75,30 +77,30 @@ mod tests {
 
     #[test]
     fn test_check_initial() {
-        let layer = vec![0, 0, 0, 1, 1, 1];
+        let layers = vec![0, 0, 0, 1, 1, 1];
         let oset = Nodes::from([0, 1]);
-        check_initial(&layer, &oset, false).unwrap();
+        check_initial(&layers, &oset, false).unwrap();
     }
 
     #[test]
     fn test_check_initial_ng() {
-        let layer = vec![0, 0, 0, 1, 1, 1];
+        let layers = vec![0, 0, 0, 1, 1, 1];
         let oset = Nodes::from([0, 1, 2, 3]);
-        assert!(check_initial(&layer, &oset, false).is_err());
+        assert!(check_initial(&layers, &oset, false).is_err());
     }
 
     #[test]
     fn test_check_initial_iff() {
-        let layer = vec![0, 0, 0, 1, 1, 1];
+        let layers = vec![0, 0, 0, 1, 1, 1];
         let oset = Nodes::from([0, 1, 2]);
-        check_initial(&layer, &oset, true).unwrap();
+        check_initial(&layers, &oset, true).unwrap();
     }
 
     #[test]
     fn test_check_initial_iff_ng() {
-        let layer = vec![0, 0, 0, 1, 1, 1];
+        let layers = vec![0, 0, 0, 1, 1, 1];
         let oset = Nodes::from([0, 1]);
-        assert!(check_initial(&layer, &oset, true).is_err());
+        assert!(check_initial(&layers, &oset, true).is_err());
     }
 
     #[test]

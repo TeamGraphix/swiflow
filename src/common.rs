@@ -12,7 +12,7 @@ pub type Nodes = hashbrown::HashSet<usize>;
 /// Simple graph encoded as list of neighbors.
 pub type Graph = Vec<Nodes>;
 /// Layer representation of the flow partial order.
-pub type Layer = Vec<usize>;
+pub type Layers = Vec<usize>;
 
 /// Ordered set of nodes.
 ///

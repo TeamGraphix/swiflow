@@ -20,7 +20,7 @@ iset = {0}
 oset = {4}
 pplanes = {0: PPlane.Z, 1: PPlane.Z, 2: PPlane.Y, 3: PPlane.Y}
 
-result = pflow.find(g, iset, oset, pplanes)
+result = pflow.find(g, iset, oset, pplanes=pplanes)
 
 # Found
 assert result is not None

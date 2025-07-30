@@ -174,7 +174,7 @@ mod tests {
     /// Checks if the graph is valid.
     ///
     /// In production code, this check should be done in the Python layer.
-    fn check_graph(g: &Graph, iset: &Nodes, oset: &Nodes) {
+    fn check_graph(g: &[Nodes], iset: &Nodes, oset: &Nodes) {
         let n = g.len();
         assert_ne!(n, 0, "empty graph");
         for (u, gu) in g.iter().enumerate() {

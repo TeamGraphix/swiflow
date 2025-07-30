@@ -8,14 +8,14 @@ use std::collections::BTreeSet;
 
 use fixedbitset::FixedBitSet;
 
-use crate::common::{Graph, Nodes, OrderedNodes};
+use crate::common::{Nodes, OrderedNodes};
 
 /// Computes the odd neighbors of the nodes in `kset`.
 ///
 /// # Note
 ///
 /// - Naive implementation only for post-verification.
-pub fn odd_neighbors(g: &Graph, kset: &Nodes) -> Nodes {
+pub fn odd_neighbors(g: &[Nodes], kset: &Nodes) -> Nodes {
     assert!(kset.iter().all(|&ki| ki < g.len()), "kset out of range");
     let mut work = kset.clone();
     work.extend(kset.iter().flat_map(|&ki| g[ki].iter().copied()));

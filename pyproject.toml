@@ -65,7 +65,7 @@ python-source = "python"
 [tool.mypy]
 python_version = "3.9"
 strict = true
-files = ["docs/source/conf.py", "python", "tests"]
+files = ["docs/source/conf.py", "examples", "python", "tests"]
 
 [tool.pyright]
 reportUnknownArgumentType = "information"
@@ -122,6 +122,10 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.pylint]
+max-positional-args = 4
+max-args = 12
 
 [tool.ruff.lint.per-file-ignores]
 "docs/**/*.py" = [

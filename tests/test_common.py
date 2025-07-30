@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import networkx as nx
 import pytest
-from swiflow import _common
+from swiflow import _common, common
 from swiflow._common import IndexMap
 from swiflow._impl import FlowValidationMessage
 from swiflow.common import Plane, PPlane
 from typing_extensions import Never
+
+from tests.assets import CASE3
 
 
 def test_check_graph_ng_g() -> None:
@@ -98,7 +100,7 @@ class TestIndexMap:
 
     def test_encode_layer_missing(self, fx_indexmap: IndexMap[str]) -> None:
         with pytest.raises(ValueError, match=r"Layers must be specified for all nodes\."):
-            fx_indexmap.encode_layer({"a": 0, "b": 1})
+            fx_indexmap.encode_layers({"a": 0, "b": 1})
 
     def test_ecatch(self, fx_indexmap: IndexMap[str]) -> None:
         def dummy_ok(x: int) -> int:
@@ -110,3 +112,35 @@ class TestIndexMap:
         assert fx_indexmap.ecatch(dummy_ok, 1) == 1
         with pytest.raises(ValueError, match=r"Zero-layer node a outside output nodes\."):
             fx_indexmap.ecatch(dummy_ng, 1)
+
+
+def test_odd_neighbors() -> None:
+    g = CASE3.g
+    for u in g.nodes:
+        assert _common.odd_neighbors(g, {u}) == set(g.neighbors(u))
+    assert _common.odd_neighbors(g, {1, 4}) == {1, 2, 4, 6}
+    assert _common.odd_neighbors(g, {2, 5}) == {2, 3, 4, 5, 6}
+    assert _common.odd_neighbors(g, {3, 6}) == {1, 2, 3, 5, 6}
+    assert _common.odd_neighbors(g, {1, 2, 3}) == {6}
+    assert _common.odd_neighbors(g, {4, 5, 6}) == {2}
+    assert _common.odd_neighbors(g, {1, 2, 3, 4, 5, 6}) == {2, 6}
+
+
+class TestInferLayer:
+    def test_line(self) -> None:
+        g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 3)])
+        flow = {0: {1}, 1: {2}, 2: {3}}
+        layers = common.infer_layers(g, flow)
+        assert layers == {0: 3, 1: 2, 2: 1, 3: 0}
+
+    def test_dag(self) -> None:
+        g: nx.Graph[int] = nx.Graph([(0, 2), (0, 3), (1, 2), (1, 3)])
+        flow = {0: {2, 3}, 1: {2, 3}}
+        layers = common.infer_layers(g, flow)
+        assert layers == {0: 1, 1: 1, 2: 0, 3: 0}
+
+    def test_cycle(self) -> None:
+        g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 0)])
+        flow = {0: {1}, 1: {2}, 2: {0}}
+        with pytest.raises(ValueError, match=r".*determine.*"):
+            common.infer_layers(g, flow)
