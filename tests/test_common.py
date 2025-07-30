@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import networkx as nx
 import pytest
-from swiflow import _common
+from swiflow import _common, common
 from swiflow._common import IndexMap
 from swiflow._impl import FlowValidationMessage
 from swiflow.common import Plane, PPlane
@@ -130,17 +130,17 @@ class TestInferLayer:
     def test_line(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 3)])
         flow = {0: {1}, 1: {2}, 2: {3}}
-        layer = _common.infer_layers(g, flow)
+        layer = common.infer_layers(g, flow)
         assert layer == {0: 3, 1: 2, 2: 1, 3: 0}
 
     def test_dag(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 2), (0, 3), (1, 2), (1, 3)])
         flow = {0: {2, 3}, 1: {2, 3}}
-        layer = _common.infer_layers(g, flow)
+        layer = common.infer_layers(g, flow)
         assert layer == {0: 1, 1: 1, 2: 0, 3: 0}
 
     def test_cycle(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 0)])
         flow = {0: {1}, 1: {2}, 2: {0}}
         with pytest.raises(ValueError, match=r".*determine.*"):
-            _common.infer_layers(g, flow)
+            common.infer_layers(g, flow)

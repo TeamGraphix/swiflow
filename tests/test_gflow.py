@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import networkx as nx
 import pytest
-from swiflow import gflow
+from swiflow import common, gflow
 from swiflow.common import Plane
 
 from tests.assets import CASES, FlowTestCase
@@ -31,3 +31,5 @@ def test_infer_verify(c: FlowTestCase) -> None:
         pytest.skip()
     f, _ = c.gflow
     gflow.verify(f, c.g, c.iset, c.oset, plane=c.plane)
+    layer = common.infer_layers(c.g, f)
+    gflow.verify((f, layer), c.g, c.iset, c.oset, plane=c.plane)

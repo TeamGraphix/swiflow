@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from swiflow import flow
+from swiflow import common, flow
 
 from tests.assets import CASES, FlowTestCase
 
@@ -20,3 +20,5 @@ def test_infer_verify(c: FlowTestCase) -> None:
         pytest.skip()
     f, _ = c.flow
     flow.verify(f, c.g, c.iset, c.oset)
+    layer = common.infer_layers(c.g, f)
+    flow.verify((f, layer), c.g, c.iset, c.oset)
