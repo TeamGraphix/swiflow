@@ -60,6 +60,16 @@ _Flow = Mapping[_V, _V]
 _Layer = Mapping[_V, int]
 
 
+def _codec_wrap(
+    codec: IndexMap[_V],
+    flow: tuple[_Flow[_V], _Layer[_V]] | _Flow[_V],
+) -> tuple[dict[int, int], list[int] | None]:
+    if isinstance(flow, tuple):
+        f, layer = flow
+        return codec.encode_flow(f), codec.encode_layer(layer)
+    return codec.encode_flow(flow), None
+
+
 def verify(
     flow: tuple[_Flow[_V], _Layer[_V]] | _Flow[_V],
     g: nx.Graph[_V],
@@ -72,7 +82,6 @@ def verify(
     ----------
     flow : flow (required) and layer (optional)
         Flow to verify.
-        Layer is automatically computed if omitted.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.
     iset : `collections.abc.Set`
@@ -86,12 +95,9 @@ def verify(
         If the graph is invalid or verification fails.
     """
     _common.check_graph(g, iset, oset)
-    f, layer = flow if isinstance(flow, tuple) else (flow, _common.infer_layers(g, flow))
     vset = g.nodes
     codec = IndexMap(vset)
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    f_ = codec.encode_flow(f)
-    layer_ = codec.encode_layer(layer)
-    codec.ecatch(flow_bind.verify, (f_, layer_), g_, iset_, oset_)
+    codec.ecatch(flow_bind.verify, _codec_wrap(codec, flow), g_, iset_, oset_)

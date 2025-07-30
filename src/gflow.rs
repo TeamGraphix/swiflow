@@ -33,19 +33,12 @@ pub enum Plane {
 type Planes = hashbrown::HashMap<usize, Plane>;
 type GFlow = hashbrown::HashMap<usize, Nodes>;
 
-/// Checks the definition of gflow.
+/// Checks the geometric constraints of gflow.
 ///
-/// 1. i -> g(i)
-/// 2. j in Odd(g(i)) => i == j or i -> j
-/// 3. i not in g(i) and in Odd(g(i)) if plane(i) == XY
-/// 4. i in g(i) and in Odd(g(i)) if plane(i) == YZ
-/// 5. i in g(i) and not in Odd(g(i)) if plane(i) == XZ
-fn check_definition(
-    f: &GFlow,
-    layer: &Layer,
-    g: &Graph,
-    planes: &Planes,
-) -> Result<(), FlowValidationError> {
+/// - XY: i not in g(i) and in Odd(g(i))
+/// - YZ: i in g(i) and in Odd(g(i))
+/// - XZ: i in g(i) and not in Odd(g(i))
+fn check_def_geom(f: &GFlow, g: &Graph, planes: &Planes) -> Result<(), FlowValidationError> {
     for &i in itertools::chain(f.keys(), planes.keys()) {
         if f.contains_key(&i) != planes.contains_key(&i) {
             Err(InvalidMeasurementSpec { node: i })?;
@@ -53,17 +46,7 @@ fn check_definition(
     }
     for (&i, fi) in f {
         let pi = planes[&i];
-        for &fij in fi {
-            if i != fij && layer[i] <= layer[fij] {
-                Err(InconsistentFlowOrder { nodes: (i, fij) })?;
-            }
-        }
         let odd_fi = utils::odd_neighbors(g, fi);
-        for &j in &odd_fi {
-            if i != j && layer[i] <= layer[j] {
-                Err(InconsistentFlowOrder { nodes: (i, j) })?;
-            }
-        }
         let in_info = (fi.contains(&i), odd_fi.contains(&i));
         match pi {
             Plane::XY if in_info != (false, true) => {
@@ -85,6 +68,27 @@ fn check_definition(
                 })?;
             }
             _ => {}
+        }
+    }
+    Ok(())
+}
+
+/// Checks the layer constraints of gflow.
+///
+/// - i -> g(i)
+/// - j in Odd(g(i)) => i == j or i -> j
+fn check_def_layer(f: &GFlow, layer: &Layer, g: &Graph) -> Result<(), FlowValidationError> {
+    for (&i, fi) in f {
+        for &fij in fi {
+            if i != fij && layer[i] <= layer[fij] {
+                Err(InconsistentFlowOrder { nodes: (i, fij) })?;
+            }
+        }
+        let odd_fi = utils::odd_neighbors(g, fi);
+        for &j in &odd_fi {
+            if i != j && layer[i] <= layer[j] {
+                Err(InconsistentFlowOrder { nodes: (i, j) })?;
+            }
         }
     }
     Ok(())
@@ -229,7 +233,8 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
                 .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
             validate::check_domain(f_flatiter, &vset, &iset, &oset).expect(FATAL_MSG);
             validate::check_initial(&layer, &oset, true).expect(FATAL_MSG);
-            check_definition(&f, &layer, &g, &planes).expect(FATAL_MSG);
+            check_def_geom(&f, &g, &planes).expect(FATAL_MSG);
+            check_def_layer(&f, &layer, &g).expect(FATAL_MSG);
         }
         Some((f, layer))
     } else {
@@ -248,7 +253,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
 pub fn verify(
-    gflow: (GFlow, Layer),
+    gflow: (GFlow, Option<Layer>),
     g: Graph,
     iset: Nodes,
     oset: Nodes,
@@ -261,7 +266,10 @@ pub fn verify(
         .iter()
         .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
     validate::check_domain(f_flatiter, &vset, &iset, &oset)?;
-    check_definition(&f, &layer, &g, &planes)?;
+    check_def_geom(&f, &g, &planes)?;
+    if let Some(layer) = layer {
+        check_def_layer(&f, &layer, &g)?;
+    }
     Ok(())
 }
 
@@ -276,9 +284,8 @@ mod tests {
     fn test_check_definition_ng() {
         // Missing Plane specification
         assert_eq!(
-            check_definition(
+            check_def_geom(
                 &map! { 0: set!{1} },
-                &vec![1, 0],
                 &test_utils::graph(&[(0, 1)]),
                 &map! {},
             ),
@@ -286,32 +293,26 @@ mod tests {
         );
         // Violate 0 -> f(0) = 1
         assert_eq!(
-            check_definition(
+            check_def_layer(
                 &map! { 0: set!{1} },
                 &vec![0, 0],
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: Plane::XY },
             ),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate 1 in nb(f(0)) = nb(2) => 0 == 1 or 0 -> 1
         assert_eq!(
-            check_definition(
+            check_def_layer(
                 &map! { 0: set!{2}, 1: set!{2} },
                 &vec![1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)]),
-                &map! {
-                    0: Plane::XY,
-                    1: Plane::XY
-                },
             ),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate XY: 0 in f(0)
         assert_eq!(
-            check_definition(
+            check_def_geom(
                 &map! { 0: set!{0} },
-                &vec![1, 0],
                 &test_utils::graph(&[(0, 1)]),
                 &map! { 0: Plane::XY },
             ),
@@ -322,9 +323,8 @@ mod tests {
         );
         // Violate YZ: 0 in Odd(f(0))
         assert_eq!(
-            check_definition(
+            check_def_geom(
                 &map! { 0: set!{1} },
-                &vec![1, 0],
                 &test_utils::graph(&[(0, 1)]),
                 &map! { 0: Plane::YZ },
             ),
@@ -335,9 +335,8 @@ mod tests {
         );
         // Violate XZ: 0 not in Odd(f(0)) and in f(0)
         assert_eq!(
-            check_definition(
+            check_def_geom(
                 &map! { 0: set!{0} },
-                &vec![1, 0],
                 &test_utils::graph(&[(0, 1)]),
                 &map! { 0: Plane::XZ },
             ),
@@ -348,9 +347,8 @@ mod tests {
         );
         // Violate XZ: 0 in Odd(f(0)) and not in f(0)
         assert_eq!(
-            check_definition(
+            check_def_geom(
                 &map! { 0: set!{1} },
-                &vec![1, 0],
                 &test_utils::graph(&[(0, 1)]),
                 &map! { 0: Plane::XZ },
             ),
@@ -369,7 +367,7 @@ mod tests {
         let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(layer, vec![0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
@@ -389,7 +387,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([3]));
         assert_eq!(f[&3], Nodes::from([4]));
         assert_eq!(layer, vec![4, 3, 2, 1, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
@@ -409,7 +407,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([4]));
         assert_eq!(f[&3], Nodes::from([5]));
         assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
@@ -427,7 +425,7 @@ mod tests {
         assert_eq!(f[&1], Nodes::from([3, 4, 5]));
         assert_eq!(f[&2], Nodes::from([3, 5]));
         assert_eq!(layer, vec![1, 1, 1, 0, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
@@ -447,7 +445,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([2, 4]));
         assert_eq!(f[&3], Nodes::from([3]));
         assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        verify((f, Some(layer)), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]

@@ -14,12 +14,23 @@ use crate::{
 
 type Flow = hashbrown::HashMap<usize, usize>;
 
-/// Checks the definition of causal flow.
+/// Checks the geometric constraints of flow.
 ///
-/// 1. i -> f(i)
-/// 2. j in neighbors(f(i)) => i == j or i -> j
-/// 3. i in neighbors(f(i))
-fn check_definition(f: &Flow, layer: &Layer, g: &Graph) -> Result<(), FlowValidationError> {
+/// - i in N(f(i))
+fn check_def_geom(f: &Flow, g: &Graph) -> Result<(), FlowValidationError> {
+    for (&i, &fi) in f {
+        if !g[i].contains(&fi) {
+            Err(InconsistentFlowOrder { nodes: (i, fi) })?;
+        }
+    }
+    Ok(())
+}
+
+/// Checks the layer constraints of flow.
+///
+/// - i -> f(i)
+/// - j in N(f(i)) => i == j or i -> j
+fn check_def_layer(f: &Flow, layer: &Layer, g: &Graph) -> Result<(), FlowValidationError> {
     for (&i, &fi) in f {
         if layer[i] <= layer[fi] {
             Err(InconsistentFlowOrder { nodes: (i, fi) })?;
@@ -28,9 +39,6 @@ fn check_definition(f: &Flow, layer: &Layer, g: &Graph) -> Result<(), FlowValida
             if i != j && layer[i] <= layer[j] {
                 Err(InconsistentFlowOrder { nodes: (i, j) })?;
             }
-        }
-        if !(g[fi].contains(&i) && g[i].contains(&fi)) {
-            Err(InconsistentFlowOrder { nodes: (i, fi) })?;
         }
     }
     Ok(())
@@ -107,7 +115,8 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
         {
             validate::check_domain(f.iter(), &vset, &iset, &oset_orig).expect(FATAL_MSG);
             validate::check_initial(&layer, &oset_orig, true).expect(FATAL_MSG);
-            check_definition(&f, &layer, &g).expect(FATAL_MSG);
+            check_def_geom(&f, &g).expect(FATAL_MSG);
+            check_def_layer(&f, &layer, &g).expect(FATAL_MSG);
         }
         Some((f, layer))
     } else {
@@ -125,12 +134,15 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
 #[pyfunction]
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
-pub fn verify(flow: (Flow, Layer), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
+pub fn verify(flow: (Flow, Option<Layer>), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
     let (f, layer) = flow;
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     validate::check_domain(f.iter(), &vset, &iset, &oset)?;
-    check_definition(&f, &layer, &g)?;
+    check_def_geom(&f, &g)?;
+    if let Some(layer) = layer {
+        check_def_layer(&f, &layer, &g)?;
+    }
     Ok(())
 }
 
@@ -145,12 +157,12 @@ mod tests {
     fn test_check_definition_ng() {
         // Violate 0 -> f(0) = 1
         assert_eq!(
-            check_definition(&map! { 0: 1 }, &vec![0, 0], &test_utils::graph(&[(0, 1)])),
+            check_def_layer(&map! { 0: 1 }, &vec![0, 0], &test_utils::graph(&[(0, 1)])),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate 1 in nb(f(0)) = nb(2) => 0 == 1 or 0 -> 1
         assert_eq!(
-            check_definition(
+            check_def_layer(
                 &map! { 0: 2 },
                 &vec![1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)])
@@ -159,11 +171,7 @@ mod tests {
         );
         // Violate 0 in nb(f(0)) = nb(2)
         assert_eq!(
-            check_definition(
-                &map! { 0: 2 },
-                &vec![2, 1, 0],
-                &test_utils::graph(&[(0, 1), (1, 2)])
-            ),
+            check_def_geom(&map! { 0: 2 }, &test_utils::graph(&[(0, 1), (1, 2)])),
             Err(InconsistentFlowOrder { nodes: (0, 2) })
         );
     }
@@ -175,7 +183,7 @@ mod tests {
         let (f, layer) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(layer, vec![0, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        verify((f, Some(layer)), g, iset, oset).unwrap();
     }
 
     #[test_log::test]
@@ -189,7 +197,7 @@ mod tests {
         assert_eq!(f[&2], 3);
         assert_eq!(f[&3], 4);
         assert_eq!(layer, vec![4, 3, 2, 1, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        verify((f, Some(layer)), g, iset, oset).unwrap();
     }
 
     #[test_log::test]
@@ -203,7 +211,7 @@ mod tests {
         assert_eq!(f[&2], 4);
         assert_eq!(f[&3], 5);
         assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        verify((f, Some(layer)), g, iset, oset).unwrap();
     }
 
     #[test_log::test]
