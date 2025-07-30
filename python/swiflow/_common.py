@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable, Hashable, Iterable, Mapping
+from collections.abc import Callable, Hashable, Iterable, Mapping, MutableSet
 from collections.abc import Set as AbstractSet
 from typing import Generic, TypeVar
 
@@ -300,9 +300,13 @@ class IndexMap(Generic[_V]):
             raise self.decode_err(e) from None
 
 
-def _infer_layers_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
-    """Fix flow layers one by one depending on order constraints."""
-    pred = {u: set(gd.predecessors(u)) for u in gd.nodes}
+def _infer_layers_impl(pred: Mapping[_V, MutableSet[_V]], succ: Mapping[_V, AbstractSet[_V]]) -> Mapping[_V, int]:
+    """Fix flow layers one by one depending on order constraints.
+
+    Notes
+    -----
+    :py:obj:`pred` is mutated in-place.
+    """
     work = {u for u, pu in pred.items() if not pu}
     ret: dict[_V, int] = {}
     for l_now in itertools.count():
@@ -311,13 +315,13 @@ def _infer_layers_impl(gd: nx.DiGraph[_V]) -> Mapping[_V, int]:
         next_work: set[_V] = set()
         for u in work:
             ret[u] = l_now
-            for v in gd.successors(u):
+            for v in succ[u]:
                 ent = pred[v]
                 ent.discard(u)
                 if not ent:
                     next_work.add(v)
         work = next_work
-    if len(ret) != len(gd):
+    if len(ret) != len(succ):
         msg = "Failed to determine layer for all nodes."
         raise ValueError(msg)
     return ret
@@ -377,15 +381,17 @@ def infer_layers(
     -----
     This function operates in Pauli flow mode only when :py:obj`pplane` is explicitly given.
     """
-    gd: nx.DiGraph[_V] = nx.DiGraph()
-    gd.add_nodes_from(g.nodes)
     special = _special_edges(g, anyflow, pplane)
+    pred: dict[_V, set[_V]] = {u: set() for u in g.nodes}
+    succ: dict[_V, set[_V]] = {u: set() for u in g.nodes}
     for u, fu_ in anyflow.items():
         fu = fu_ if isinstance(fu_, AbstractSet) else {fu_}
         fu_odd = odd_neighbors(g, fu)
         for v in itertools.chain(fu, fu_odd):
             if u == v or (u, v) in special:
                 continue
-            gd.add_edge(u, v)
-    gd = gd.reverse()
-    return _infer_layers_impl(gd)
+            # Reversed
+            pred[u].add(v)
+            succ[v].add(u)
+    # MEMO: `pred` is invalidated by `_infer_layers_impl`
+    return _infer_layers_impl(pred, succ)
