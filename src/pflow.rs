@@ -275,9 +275,9 @@ struct PFlowContext<'a> {
     work: &'a mut Vec<FixedBitSet>,
     g: &'a [Nodes],
     u: usize,
-    rowset_upper: &'a OrderedNodes,
-    rowset_lower: &'a OrderedNodes,
-    colset: &'a OrderedNodes,
+    rowset_upper: &'a ScopedInclude<'a>,
+    rowset_lower: &'a ScopedExclude<'a>,
+    colset: &'a ScopedExclude<'a>,
     x: &'a mut FixedBitSet,
     f: &'a mut PFlow,
 }
