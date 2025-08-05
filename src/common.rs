@@ -64,7 +64,7 @@ impl From<FlowValidationError> for PyErr {
 }
 
 // TODO: Remove once stabilized
-pub const FATAL_MSG: &str = "\
+pub(crate) const FATAL_MSG: &str = "\
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !            POST VERIFICATION FAILED            !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -81,7 +81,11 @@ https://github.com/TeamGraphix/swiflow/issues/new";
 /// - `layers`: The layer.
 /// - `oset`: The set of output nodes.
 /// - `iff`: If `true`, `layers[u] == 0` "iff" `u` is in `oset`. Otherwise "if".
-pub fn check_initial(layers: &[Layer], oset: &Nodes, iff: bool) -> Result<(), FlowValidationError> {
+pub(crate) fn check_initial(
+    layers: &[Layer],
+    oset: &Nodes,
+    iff: bool,
+) -> Result<(), FlowValidationError> {
     for (u, &lu) in layers.iter().enumerate() {
         match (oset.contains(&u), lu == 0) {
             (true, false) => {
@@ -104,7 +108,7 @@ pub fn check_initial(layers: &[Layer], oset: &Nodes, iff: bool) -> Result<(), Fl
 /// - `vset`: All nodes.
 /// - `iset`: Input nodes.
 /// - `oset`: Output nodes.
-pub fn check_domain<'a, 'b>(
+pub(crate) fn check_domain<'a, 'b>(
     f_flatiter: impl Iterator<Item = (&'a Node, &'b Node)>,
     vset: &Nodes,
     iset: &Nodes,
