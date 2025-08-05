@@ -15,7 +15,7 @@
 #[macro_use]
 mod internal;
 
-pub mod common;
+mod common;
 pub mod flow;
 pub mod gflow;
 pub mod pflow;

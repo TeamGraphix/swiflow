@@ -5,11 +5,11 @@ use pyo3::prelude::*;
 
 use crate::{
     common::{
-        FATAL_MSG,
+        self, FATAL_MSG,
         FlowValidationError::{self, InconsistentFlowOrder},
         Graph, Layer, Layers, Node, Nodes,
     },
-    internal::{utils::InPlaceSetDiff, validate},
+    internal::utils::InPlaceSetDiff,
 };
 
 type Flow = hashbrown::HashMap<Node, Node>;
@@ -113,8 +113,8 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layers)> {
         tracing::debug!("layers: {layers:?}");
         // TODO: Remove this block once stabilized
         {
-            validate::check_domain(f.iter(), &vset, &iset, &oset_orig).expect(FATAL_MSG);
-            validate::check_initial(&layers, &oset_orig, true).expect(FATAL_MSG);
+            common::check_domain(f.iter(), &vset, &iset, &oset_orig).expect(FATAL_MSG);
+            common::check_initial(&layers, &oset_orig, true).expect(FATAL_MSG);
             check_def_geom(&f, &g).expect(FATAL_MSG);
             check_def_layer(&f, &layers, &g).expect(FATAL_MSG);
         }
@@ -138,7 +138,7 @@ pub fn verify(flow: (Flow, Option<Layers>), g: Graph, iset: Nodes, oset: Nodes) 
     let (f, layers) = flow;
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
-    validate::check_domain(f.iter(), &vset, &iset, &oset)?;
+    common::check_domain(f.iter(), &vset, &iset, &oset)?;
     check_def_geom(&f, &g)?;
     if let Some(layers) = layers {
         check_def_layer(&f, &layers, &g)?;

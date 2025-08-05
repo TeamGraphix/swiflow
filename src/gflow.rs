@@ -8,7 +8,7 @@ use pyo3::prelude::*;
 
 use crate::{
     common::{
-        FATAL_MSG,
+        self, FATAL_MSG,
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPlane, InvalidMeasurementSpec,
         },
@@ -17,7 +17,6 @@ use crate::{
     internal::{
         gf2_linalg::GF2Solver,
         utils::{self, InPlaceSetDiff},
-        validate,
     },
 };
 
@@ -231,8 +230,8 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
             let f_flatiter = f
                 .iter()
                 .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
-            validate::check_domain(f_flatiter, &vset, &iset, &oset).expect(FATAL_MSG);
-            validate::check_initial(&layers, &oset, true).expect(FATAL_MSG);
+            common::check_domain(f_flatiter, &vset, &iset, &oset).expect(FATAL_MSG);
+            common::check_initial(&layers, &oset, true).expect(FATAL_MSG);
             check_def_geom(&f, &g, &planes).expect(FATAL_MSG);
             check_def_layer(&f, &layers, &g).expect(FATAL_MSG);
         }
@@ -265,7 +264,7 @@ pub fn verify(
     let f_flatiter = f
         .iter()
         .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
-    validate::check_domain(f_flatiter, &vset, &iset, &oset)?;
+    common::check_domain(f_flatiter, &vset, &iset, &oset)?;
     check_def_geom(&f, &g, &planes)?;
     if let Some(layers) = layers {
         check_def_layer(&f, &layers, &g)?;
