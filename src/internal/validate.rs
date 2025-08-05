@@ -111,8 +111,7 @@ mod tests {
     #[test]
     fn test_check_domain_gflow() {
         let f = hashbrown::HashMap::<usize, Nodes>::from([
-            // OK: 0 in f(0)
-            (0, Nodes::from([0, 1])),
+            (0, Nodes::from([1, 2])),
             (1, Nodes::from([2])),
         ]);
         let vset = Nodes::from([0, 1, 2]);
