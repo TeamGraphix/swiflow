@@ -7,12 +7,12 @@ use crate::{
     common::{
         FATAL_MSG,
         FlowValidationError::{self, InconsistentFlowOrder},
-        Graph, Layers, Nodes,
+        Graph, Layer, Layers, Node, Nodes,
     },
     internal::{utils::InPlaceSetDiff, validate},
 };
 
-type Flow = hashbrown::HashMap<usize, usize>;
+type Flow = hashbrown::HashMap<Node, Node>;
 
 /// Checks the geometric constraints of flow.
 ///
@@ -30,7 +30,7 @@ fn check_def_geom(f: &Flow, g: &[Nodes]) -> Result<(), FlowValidationError> {
 ///
 /// - i -> f(i)
 /// - j in N(f(i)) => i == j or i -> j
-fn check_def_layer(f: &Flow, layers: &[usize], g: &[Nodes]) -> Result<(), FlowValidationError> {
+fn check_def_layer(f: &Flow, layers: &[Layer], g: &[Nodes]) -> Result<(), FlowValidationError> {
     for (&i, &fi) in f {
         if layers[i] <= layers[fi] {
             Err(InconsistentFlowOrder { nodes: (i, fi) })?;

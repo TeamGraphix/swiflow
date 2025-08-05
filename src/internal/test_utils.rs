@@ -2,7 +2,7 @@
 
 use std::sync::LazyLock;
 
-use crate::common::{Graph, Nodes};
+use crate::common::{Graph, Node, Nodes};
 
 pub mod exports {
     pub use hashbrown::{HashMap, HashSet};
@@ -24,7 +24,7 @@ macro_rules! set {
 }
 
 /// Creates a undirected graph from edges.
-pub fn graph<const N: usize>(edges: &[(usize, usize); N]) -> Graph {
+pub fn graph<const N: usize>(edges: &[(Node, Node); N]) -> Graph {
     let n = edges
         .iter()
         .map(|&(u, v)| u.max(v) + 1)

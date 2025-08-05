@@ -12,7 +12,7 @@ use crate::{
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPPlane, InvalidMeasurementSpec,
         },
-        Graph, Layers, Nodes, OrderedNodes,
+        Graph, Layer, Layers, Node, Nodes, OrderedNodes,
     },
     internal::{
         gf2_linalg::GF2Solver,
@@ -33,8 +33,8 @@ pub enum PPlane {
     Z,
 }
 
-type PPlanes = hashbrown::HashMap<usize, PPlane>;
-type PFlow = hashbrown::HashMap<usize, Nodes>;
+type PPlanes = hashbrown::HashMap<Node, PPlane>;
+type PFlow = hashbrown::HashMap<Node, Nodes>;
 
 /// Checks the geometric constraints of pflow.
 fn check_def_geom(f: &PFlow, g: &[Nodes], pplanes: &PPlanes) -> Result<(), FlowValidationError> {
@@ -93,7 +93,7 @@ fn check_def_geom(f: &PFlow, g: &[Nodes], pplanes: &PPlanes) -> Result<(), FlowV
 /// Checks the layer constraints of pflow.
 fn check_def_layer(
     f: &PFlow,
-    layers: &[usize],
+    layers: &[Layer],
     g: &[Nodes],
     pplanes: &PPlanes,
 ) -> Result<(), FlowValidationError> {
@@ -184,7 +184,7 @@ const BRANCH_XZ: BranchKind = 2;
 /// Initializes the right-hand side of working storage for the upper block.
 fn init_work_upper_rhs<const K: BranchKind>(
     work: &mut [FixedBitSet],
-    u: usize,
+    u: Node,
     g: &[Nodes],
     rowset: &OrderedNodes,
     colset: &OrderedNodes,
@@ -214,7 +214,7 @@ fn init_work_upper_rhs<const K: BranchKind>(
 /// Initializes the right-hand side of working storage for the lower block.
 fn init_work_lower_rhs<const K: BranchKind>(
     work: &mut [FixedBitSet],
-    u: usize,
+    u: Node,
     g: &[Nodes],
     rowset: &OrderedNodes,
     colset: &OrderedNodes,
@@ -238,7 +238,7 @@ fn init_work_lower_rhs<const K: BranchKind>(
 /// Initializes working storage for the given branch kind.
 fn init_work<const K: BranchKind>(
     work: &mut [FixedBitSet],
-    u: usize,
+    u: Node,
     g: &[Nodes],
     rowset_upper: &OrderedNodes,
     rowset_lower: &OrderedNodes,
@@ -255,7 +255,7 @@ fn init_work<const K: BranchKind>(
 }
 
 /// Decodes the solution returned by `GF2Solver`.
-fn decode_solution<const K: BranchKind>(u: usize, x: &FixedBitSet, colset: &OrderedNodes) -> Nodes {
+fn decode_solution<const K: BranchKind>(u: Node, x: &FixedBitSet, colset: &OrderedNodes) -> Nodes {
     const {
         assert!(K == BRANCH_XY || K == BRANCH_YZ || K == BRANCH_XZ);
     };
@@ -274,7 +274,7 @@ fn decode_solution<const K: BranchKind>(u: usize, x: &FixedBitSet, colset: &Orde
 struct PFlowContext<'a> {
     work: &'a mut Vec<FixedBitSet>,
     g: &'a [Nodes],
-    u: usize,
+    u: Node,
     rowset_upper: &'a ScopedInclude<'a>,
     rowset_lower: &'a ScopedExclude<'a>,
     colset: &'a ScopedExclude<'a>,

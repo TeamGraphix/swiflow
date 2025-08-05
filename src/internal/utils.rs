@@ -8,7 +8,7 @@ use std::collections::BTreeSet;
 
 use fixedbitset::FixedBitSet;
 
-use crate::common::{Nodes, OrderedNodes};
+use crate::common::{Node, Nodes, OrderedNodes};
 
 /// Computes the odd neighbors of the nodes in `kset`.
 ///
@@ -78,11 +78,11 @@ pub fn indexmap<T: FromIterator<(usize, usize)>>(set: &OrderedNodes) -> T {
 /// Inserts `u` on construction and reverts on drop.
 pub struct ScopedInclude<'a> {
     target: &'a mut OrderedNodes,
-    u: Option<usize>,
+    u: Option<Node>,
 }
 
 impl<'a> ScopedInclude<'a> {
-    pub fn new(target: &'a mut OrderedNodes, u: usize) -> Self {
+    pub fn new(target: &'a mut OrderedNodes, u: Node) -> Self {
         let u = if target.insert(u) { Some(u) } else { None };
         Self { target, u }
     }
@@ -116,11 +116,11 @@ impl Drop for ScopedInclude<'_> {
 /// Removes `u` on construction and reverts on drop.
 pub struct ScopedExclude<'a> {
     target: &'a mut OrderedNodes,
-    u: Option<usize>,
+    u: Option<Node>,
 }
 
 impl<'a> ScopedExclude<'a> {
-    pub fn new(target: &'a mut OrderedNodes, u: usize) -> Self {
+    pub fn new(target: &'a mut OrderedNodes, u: Node) -> Self {
         let u = if target.remove(&u) { Some(u) } else { None };
         Self { target, u }
     }

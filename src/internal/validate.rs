@@ -8,7 +8,7 @@ use crate::common::{
     FlowValidationError::{
         self, ExcessiveNonZeroLayer, ExcessiveZeroLayer, InvalidFlowCodomain, InvalidFlowDomain,
     },
-    Nodes,
+    Layer, Node, Nodes,
 };
 
 /// Checks if the layer-zero nodes are correctly chosen.
@@ -20,7 +20,7 @@ use crate::common::{
 /// - `layers`: The layer.
 /// - `oset`: The set of output nodes.
 /// - `iff`: If `true`, `layers[u] == 0` "iff" `u` is in `oset`. Otherwise "if".
-pub fn check_initial(layers: &[usize], oset: &Nodes, iff: bool) -> Result<(), FlowValidationError> {
+pub fn check_initial(layers: &[Layer], oset: &Nodes, iff: bool) -> Result<(), FlowValidationError> {
     for (u, &lu) in layers.iter().enumerate() {
         match (oset.contains(&u), lu == 0) {
             (true, false) => {
@@ -39,12 +39,12 @@ pub fn check_initial(layers: &[usize], oset: &Nodes, iff: bool) -> Result<(), Fl
 ///
 /// # Arguments
 ///
-/// - `f_flatiter`: Flow, gflow, or pflow as `impl Iterator<Item = (&usize, &usize)>`.
+/// - `f_flatiter`: Flow, gflow, or pflow as `impl Iterator<Item = (&Node, &Node)>`.
 /// - `vset`: All nodes.
 /// - `iset`: Input nodes.
 /// - `oset`: Output nodes.
 pub fn check_domain<'a, 'b>(
-    f_flatiter: impl Iterator<Item = (&'a usize, &'b usize)>,
+    f_flatiter: impl Iterator<Item = (&'a Node, &'b Node)>,
     vset: &Nodes,
     iset: &Nodes,
     oset: &Nodes,
@@ -101,7 +101,7 @@ mod tests {
 
     #[test]
     fn test_check_domain_flow() {
-        let f = hashbrown::HashMap::<usize, usize>::from([(0, 1), (1, 2)]);
+        let f = hashbrown::HashMap::<Node, Node>::from([(0, 1), (1, 2)]);
         let vset = Nodes::from([0, 1, 2]);
         let iset = Nodes::from([0]);
         let oset = Nodes::from([2]);
@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn test_check_domain_gflow() {
-        let f = hashbrown::HashMap::<usize, Nodes>::from([
+        let f = hashbrown::HashMap::<Node, Nodes>::from([
             (0, Nodes::from([1, 2])),
             (1, Nodes::from([2])),
         ]);
@@ -125,7 +125,7 @@ mod tests {
 
     #[test]
     fn test_check_domain_ng_iset() {
-        let f = hashbrown::HashMap::<usize, Nodes>::from([
+        let f = hashbrown::HashMap::<Node, Nodes>::from([
             (0, Nodes::from([0, 1])),
             (2, Nodes::from([2])),
         ]);
@@ -140,10 +140,8 @@ mod tests {
 
     #[test]
     fn test_check_domain_ng_oset() {
-        let f = hashbrown::HashMap::<usize, Nodes>::from([
-            (0, Nodes::from([1])),
-            (1, Nodes::from([0])),
-        ]);
+        let f =
+            hashbrown::HashMap::<Node, Nodes>::from([(0, Nodes::from([1])), (1, Nodes::from([0]))]);
         let vset = Nodes::from([0, 1, 2]);
         let iset = Nodes::from([0]);
         let oset = Nodes::from([2]);

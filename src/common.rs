@@ -7,19 +7,23 @@ use thiserror::Error;
 
 use crate::{gflow::Plane, pflow::PPlane};
 
-/// Set of nodes indexed by 0-based integers.
-pub type Nodes = hashbrown::HashSet<usize>;
+/// Node index.
+pub type Node = usize;
+/// Layer index.
+pub type Layer = usize;
+/// Set of nodes.
+pub type Nodes = hashbrown::HashSet<Node>;
 /// Simple graph encoded as list of neighbors.
 pub type Graph = Vec<Nodes>;
 /// Layer representation of the flow partial order.
-pub type Layers = Vec<usize>;
+pub type Layers = Vec<Layer>;
 
 /// Ordered set of nodes.
 ///
 /// # Note
 ///
 /// Used only when iteration order matters.
-pub(crate) type OrderedNodes = BTreeSet<usize>;
+pub(crate) type OrderedNodes = BTreeSet<Node>;
 
 /// Error type for flow validation.
 ///
@@ -29,21 +33,21 @@ pub(crate) type OrderedNodes = BTreeSet<usize>;
 pub enum FlowValidationError {
     // Keep in sync with Python-side error messages
     #[error("layer-{layer} node {node} inside output nodes")]
-    ExcessiveNonZeroLayer { node: usize, layer: usize },
+    ExcessiveNonZeroLayer { node: Node, layer: Layer },
     #[error("zero-layer node {node} outside output nodes")]
-    ExcessiveZeroLayer { node: usize },
+    ExcessiveZeroLayer { node: Node },
     #[error("f({node}) has invalid codomain")]
-    InvalidFlowCodomain { node: usize },
+    InvalidFlowCodomain { node: Node },
     #[error("f({node}) has invalid domain")]
-    InvalidFlowDomain { node: usize },
+    InvalidFlowDomain { node: Node },
     #[error("node {node} has invalid measurement specification")]
-    InvalidMeasurementSpec { node: usize },
+    InvalidMeasurementSpec { node: Node },
     #[error("flow-order inconsistency on nodes ({}, {})",.nodes.0, .nodes.1)]
-    InconsistentFlowOrder { nodes: (usize, usize) },
+    InconsistentFlowOrder { nodes: (Node, Node) },
     #[error("broken {plane:?} measurement on node {node}")]
-    InconsistentFlowPlane { node: usize, plane: Plane },
+    InconsistentFlowPlane { node: Node, plane: Plane },
     #[error("broken {pplane:?} measurement on node {node}")]
-    InconsistentFlowPPlane { node: usize, pplane: PPlane },
+    InconsistentFlowPPlane { node: Node, pplane: PPlane },
 }
 
 impl From<FlowValidationError> for PyErr {

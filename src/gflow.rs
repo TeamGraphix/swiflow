@@ -12,7 +12,7 @@ use crate::{
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPlane, InvalidMeasurementSpec,
         },
-        Graph, Layers, Nodes, OrderedNodes,
+        Graph, Layer, Layers, Node, Nodes, OrderedNodes,
     },
     internal::{
         gf2_linalg::GF2Solver,
@@ -30,8 +30,8 @@ pub enum Plane {
     XZ,
 }
 
-type Planes = hashbrown::HashMap<usize, Plane>;
-type GFlow = hashbrown::HashMap<usize, Nodes>;
+type Planes = hashbrown::HashMap<Node, Plane>;
+type GFlow = hashbrown::HashMap<Node, Nodes>;
 
 /// Checks the geometric constraints of gflow.
 ///
@@ -77,7 +77,7 @@ fn check_def_geom(f: &GFlow, g: &[Nodes], planes: &Planes) -> Result<(), FlowVal
 ///
 /// - i -> g(i)
 /// - j in Odd(g(i)) => i == j or i -> j
-fn check_def_layer(f: &GFlow, layers: &[usize], g: &[Nodes]) -> Result<(), FlowValidationError> {
+fn check_def_layer(f: &GFlow, layers: &[Layer], g: &[Nodes]) -> Result<(), FlowValidationError> {
     for (&i, fi) in f {
         for &fij in fi {
             if i != fij && layers[i] <= layers[fij] {
