@@ -38,7 +38,7 @@ type PFlow = hashbrown::HashMap<Node, Nodes>;
 
 /// Checks the geometric constraints of pflow.
 fn check_def_geom(f: &PFlow, g: &[Nodes], pplanes: &PPlanes) -> Result<(), FlowValidationError> {
-    for &i in itertools::chain(f.keys(), pplanes.keys()) {
+    for &i in Iterator::chain(f.keys(), pplanes.keys()) {
         if f.contains_key(&i) != pplanes.contains_key(&i) {
             Err(InvalidMeasurementSpec { node: i })?;
         }

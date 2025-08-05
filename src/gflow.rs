@@ -39,7 +39,7 @@ type GFlow = hashbrown::HashMap<Node, Nodes>;
 /// - YZ: i in g(i) and in Odd(g(i))
 /// - XZ: i in g(i) and not in Odd(g(i))
 fn check_def_geom(f: &GFlow, g: &[Nodes], planes: &Planes) -> Result<(), FlowValidationError> {
-    for &i in itertools::chain(f.keys(), planes.keys()) {
+    for &i in Iterator::chain(f.keys(), planes.keys()) {
         if f.contains_key(&i) != planes.contains_key(&i) {
             Err(InvalidMeasurementSpec { node: i })?;
         }
