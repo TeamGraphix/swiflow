@@ -1,6 +1,6 @@
 //! Common functionalities.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 use pyo3::{exceptions::PyValueError, prelude::*};
 use thiserror::Error;
@@ -18,7 +18,7 @@ pub type Node = usize;
 /// Layer index.
 pub type Layer = usize;
 /// Set of nodes.
-pub type Nodes = hashbrown::HashSet<Node>;
+pub type Nodes = HashSet<Node>;
 /// Simple graph encoded as list of neighbors.
 pub type Graph = Vec<Nodes>;
 /// Layer representation of the flow partial order.
@@ -128,6 +128,7 @@ pub fn check_domain<'a, 'b>(
 #[cfg(test)]
 mod tests {
     use core::iter;
+    use std::collections::HashMap;
 
     use super::*;
     use crate::common::Nodes;
@@ -167,7 +168,7 @@ mod tests {
 
     #[test]
     fn test_check_domain_flow() {
-        let f = hashbrown::HashMap::<Node, Node>::from([(0, 1), (1, 2)]);
+        let f = HashMap::<Node, Node>::from([(0, 1), (1, 2)]);
         let vset = Nodes::from([0, 1, 2]);
         let iset = Nodes::from([0]);
         let oset = Nodes::from([2]);
@@ -176,10 +177,7 @@ mod tests {
 
     #[test]
     fn test_check_domain_gflow() {
-        let f = hashbrown::HashMap::<Node, Nodes>::from([
-            (0, Nodes::from([1, 2])),
-            (1, Nodes::from([2])),
-        ]);
+        let f = HashMap::<Node, Nodes>::from([(0, Nodes::from([1, 2])), (1, Nodes::from([2]))]);
         let vset = Nodes::from([0, 1, 2]);
         let iset = Nodes::from([0]);
         let oset = Nodes::from([2]);
@@ -191,10 +189,7 @@ mod tests {
 
     #[test]
     fn test_check_domain_ng_iset() {
-        let f = hashbrown::HashMap::<Node, Nodes>::from([
-            (0, Nodes::from([0, 1])),
-            (2, Nodes::from([2])),
-        ]);
+        let f = HashMap::<Node, Nodes>::from([(0, Nodes::from([0, 1])), (2, Nodes::from([2]))]);
         let vset = Nodes::from([0, 1, 2]);
         let iset = Nodes::from([0]);
         let oset = Nodes::from([2]);
@@ -206,8 +201,7 @@ mod tests {
 
     #[test]
     fn test_check_domain_ng_oset() {
-        let f =
-            hashbrown::HashMap::<Node, Nodes>::from([(0, Nodes::from([1])), (1, Nodes::from([0]))]);
+        let f = HashMap::<Node, Nodes>::from([(0, Nodes::from([1])), (1, Nodes::from([0]))]);
         let vset = Nodes::from([0, 1, 2]);
         let iset = Nodes::from([0]);
         let oset = Nodes::from([2]);

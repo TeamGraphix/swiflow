@@ -1,6 +1,7 @@
 //! Maximally-delayed causal flow algorithm.
 
-use hashbrown;
+use std::collections::HashMap;
+
 use pyo3::prelude::*;
 
 use crate::{
@@ -12,7 +13,7 @@ use crate::{
     internal::utils::InPlaceSetDiff,
 };
 
-type Flow = hashbrown::HashMap<Node, Node>;
+type Flow = HashMap<Node, Node>;
 
 /// Checks the geometric constraints of flow.
 ///

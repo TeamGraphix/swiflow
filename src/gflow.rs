@@ -1,9 +1,9 @@
 //! Maximally-delayed generalized flow algorithm.
 
 use core::iter;
+use std::collections::HashMap;
 
 use fixedbitset::FixedBitSet;
-use hashbrown;
 use pyo3::prelude::*;
 
 use crate::{
@@ -29,8 +29,8 @@ pub enum Plane {
     XZ,
 }
 
-type Planes = hashbrown::HashMap<Node, Plane>;
-type GFlow = hashbrown::HashMap<Node, Nodes>;
+type Planes = HashMap<Node, Plane>;
+type GFlow = HashMap<Node, Nodes>;
 
 /// Checks the geometric constraints of gflow.
 ///
@@ -103,8 +103,8 @@ fn init_work(
 ) {
     let ncols = omiset.len();
     // Set-to-index maps
-    let oc2i = utils::indexmap::<hashbrown::HashMap<_, _>>(ocset);
-    let omi2i = utils::indexmap::<hashbrown::HashMap<_, _>>(omiset);
+    let oc2i = utils::indexmap::<HashMap<_, _>>(ocset);
+    let omi2i = utils::indexmap::<HashMap<_, _>>(omiset);
     // Encode node as one-hot vector
     for (i, &u) in ocset.iter().enumerate() {
         let gu = &g[u];

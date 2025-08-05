@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use crate::common::{Graph, Node, Nodes};
 
 pub mod exports {
-    pub use hashbrown::{HashMap, HashSet};
+    pub use std::collections::{HashMap, HashSet};
 }
 
 macro_rules! map {
@@ -179,17 +179,17 @@ mod tests {
         assert_ne!(n, 0, "empty graph");
         for (u, gu) in g.iter().enumerate() {
             assert!(!gu.contains(&u), "self-loop detected: {u}");
-            gu.iter().for_each(|&v| {
+            for &v in gu {
                 assert!(v < n, "node index out of range: {v}");
                 assert!(g[v].contains(&u), "g must be undirected: {u} -> {v}");
-            });
+            }
         }
-        iset.iter().for_each(|&u| {
+        for &u in iset {
             assert!((0..n).contains(&u), "unknown node in iset: {u}");
-        });
-        oset.iter().for_each(|&u| {
+        }
+        for &u in oset {
             assert!((0..n).contains(&u), "unknown node in oset: {u}");
-        });
+        }
     }
 
     #[apply(template_tests)]

@@ -17,9 +17,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 fixedbitset = "0.5"
-hashbrown = "0.15"
 itertools = "0.14"
-pyo3 = { version = "0.25", features = ["abi3-py39", "hashbrown"] }
+pyo3 = { version = "0.25", features = ["abi3-py39"] }
 thiserror = "2"
 tracing = { version = "0.1", features = ["release_max_level_off"] }
 

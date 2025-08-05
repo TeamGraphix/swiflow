@@ -1,9 +1,9 @@
 //! Maximally-delayed Pauli flow algorithm.
 
 use core::iter;
+use std::collections::HashMap;
 
 use fixedbitset::FixedBitSet;
-use hashbrown;
 use pyo3::prelude::*;
 
 use crate::{
@@ -32,8 +32,8 @@ pub enum PPlane {
     Z,
 }
 
-type PPlanes = hashbrown::HashMap<Node, PPlane>;
-type PFlow = hashbrown::HashMap<Node, Nodes>;
+type PPlanes = HashMap<Node, PPlane>;
+type PFlow = HashMap<Node, Nodes>;
 
 /// Checks the geometric constraints of pflow.
 fn check_def_geom(f: &PFlow, g: &[Nodes], pplanes: &PPlanes) -> Result<(), FlowValidationError> {
@@ -142,7 +142,7 @@ fn init_work_upper_co(
     rowset: &OrderedNodes,
     colset: &OrderedNodes,
 ) {
-    let colset2i = utils::indexmap::<hashbrown::HashMap<_, _>>(colset);
+    let colset2i = utils::indexmap::<HashMap<_, _>>(colset);
     for (r, &v) in rowset.iter().enumerate() {
         let gv = &g[v];
         for &w in gv {
@@ -160,7 +160,7 @@ fn init_work_lower_co(
     rowset: &OrderedNodes,
     colset: &OrderedNodes,
 ) {
-    let colset2i = utils::indexmap::<hashbrown::HashMap<_, _>>(colset);
+    let colset2i = utils::indexmap::<HashMap<_, _>>(colset);
     for (r, &v) in rowset.iter().enumerate() {
         // need to introduce self-loops
         if let Some(&c) = colset2i.get(&v) {
@@ -192,7 +192,7 @@ fn init_work_upper_rhs<const K: BranchKind>(
         assert!(K == BRANCH_XY || K == BRANCH_YZ || K == BRANCH_XZ);
     };
     debug_assert!(rowset.contains(&u));
-    let rowset2i = utils::indexmap::<hashbrown::HashMap<_, _>>(rowset);
+    let rowset2i = utils::indexmap::<HashMap<_, _>>(rowset);
     let c = colset.len();
     let gu = &g[u];
     if K != BRANCH_YZ {
@@ -221,7 +221,7 @@ fn init_work_lower_rhs<const K: BranchKind>(
     const {
         assert!(K == BRANCH_XY || K == BRANCH_YZ || K == BRANCH_XZ);
     };
-    let rowset2i = utils::indexmap::<hashbrown::HashMap<_, _>>(rowset);
+    let rowset2i = utils::indexmap::<HashMap<_, _>>(rowset);
     let c = colset.len();
     let gu = &g[u];
     if K == BRANCH_XY {

@@ -4,7 +4,7 @@ use core::{
     hash::Hash,
     ops::{Deref, DerefMut},
 };
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 use fixedbitset::FixedBitSet;
 
@@ -39,7 +39,7 @@ pub trait InPlaceSetDiff<T> {
         U: Deref<Target = T>;
 }
 
-impl<T> InPlaceSetDiff<T> for hashbrown::HashSet<T>
+impl<T> InPlaceSetDiff<T> for HashSet<T>
 where
     T: Eq + Hash,
 {
@@ -193,9 +193,9 @@ mod tests {
 
     #[test]
     fn test_difference_with_hashset() {
-        let mut set = hashbrown::HashSet::from([1, 2, 3]);
+        let mut set = HashSet::from([1, 2, 3]);
         set.difference_with(&[2, 3, 4]);
-        assert_eq!(set, hashbrown::HashSet::from([1]));
+        assert_eq!(set, HashSet::from([1]));
     }
 
     #[test]
