@@ -12,12 +12,10 @@
     rust_2024_compatibility
 )]
 
-#[macro_use]
-mod internal;
-
 mod common;
 pub mod flow;
 pub mod gflow;
+mod internal;
 pub mod pflow;
 
 use common::FlowValidationError;

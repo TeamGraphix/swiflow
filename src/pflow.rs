@@ -466,6 +466,7 @@ pub fn verify(
 
 #[cfg(test)]
 mod tests {
+    use maplit::{hashmap, hashset};
     use test_log;
 
     use super::*;
@@ -476,31 +477,31 @@ mod tests {
         // Missing Plane specification
         assert_eq!(
             check_def_geom(
-                &map! { 0: set!{1} },
+                &hashmap! { 0 => hashset!{1} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! {},
+                &hashmap! {},
             ),
             Err(InvalidMeasurementSpec { node: 0 })
         );
         // Violate 0 -> f(0) = 1
         assert_eq!(
             check_def_layer(
-                &map! { 0: set!{1} },
+                &hashmap! { 0 => hashset!{1} },
                 &[0, 0],
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: PPlane::XY },
+                &hashmap! { 0 => PPlane::XY },
             ),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate 1 in nb(f(0)) = nb(2) => 0 == 1 or 0 -> 1
         assert_eq!(
             check_def_layer(
-                &map! { 0: set!{2}, 1: set!{2} },
+                &hashmap! { 0 => hashset!{2}, 1 => hashset!{2} },
                 &[1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)]),
-                &map! {
-                    0: PPlane::XY,
-                    1: PPlane::XY
+                &hashmap! {
+                    0 => PPlane::XY,
+                    1 => PPlane::XY
                 },
             ),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
@@ -508,10 +509,10 @@ mod tests {
         // Violate Y: 0 != 1 and not 0 -> 1 and 1 in f(0) ^ Odd(f(0))
         assert_eq!(
             check_def_layer(
-                &map! { 0: set!{1}, 1: set!{2} },
+                &hashmap! { 0 => hashset!{1}, 1 => hashset!{2} },
                 &[1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)]),
-                &map! { 0: PPlane::XY, 1: PPlane::Y },
+                &hashmap! { 0 => PPlane::XY, 1 => PPlane::Y },
             ),
             Err(InconsistentFlowPPlane {
                 node: 0,
@@ -521,9 +522,9 @@ mod tests {
         // Violate XY: 0 in f(0)
         assert_eq!(
             check_def_geom(
-                &map! { 0: set!{0} },
+                &hashmap! { 0 => hashset!{0} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: PPlane::XY },
+                &hashmap! { 0 => PPlane::XY },
             ),
             Err(InconsistentFlowPPlane {
                 node: 0,
@@ -533,9 +534,9 @@ mod tests {
         // Violate YZ: 0 in Odd(f(0))
         assert_eq!(
             check_def_geom(
-                &map! { 0: set!{1} },
+                &hashmap! { 0 => hashset!{1} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: PPlane::YZ },
+                &hashmap! { 0 => PPlane::YZ },
             ),
             Err(InconsistentFlowPPlane {
                 node: 0,
@@ -545,9 +546,9 @@ mod tests {
         // Violate XZ: 0 not in Odd(f(0)) and in f(0)
         assert_eq!(
             check_def_geom(
-                &map! { 0: set!{0} },
+                &hashmap! { 0 => hashset!{0} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: PPlane::XZ },
+                &hashmap! { 0 => PPlane::XZ },
             ),
             Err(InconsistentFlowPPlane {
                 node: 0,
@@ -557,9 +558,9 @@ mod tests {
         // Violate XZ: 0 in Odd(f(0)) and not in f(0)
         assert_eq!(
             check_def_geom(
-                &map! { 0: set!{1} },
+                &hashmap! { 0 => hashset!{1} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: PPlane::XZ },
+                &hashmap! { 0 => PPlane::XZ },
             ),
             Err(InconsistentFlowPPlane {
                 node: 0,
@@ -569,9 +570,9 @@ mod tests {
         // Violate X: 0 not in Odd(f(0))
         assert_eq!(
             check_def_geom(
-                &map! { 0: set!{0} },
+                &hashmap! { 0 => hashset!{0} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: PPlane::X },
+                &hashmap! { 0 => PPlane::X },
             ),
             Err(InconsistentFlowPPlane {
                 node: 0,
@@ -581,9 +582,9 @@ mod tests {
         // Violate Z: 0 not in f(0)
         assert_eq!(
             check_def_geom(
-                &map! { 0: set!{1} },
+                &hashmap! { 0 => hashset!{1} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: PPlane::Z },
+                &hashmap! { 0 => PPlane::Z },
             ),
             Err(InconsistentFlowPPlane {
                 node: 0,
@@ -593,9 +594,9 @@ mod tests {
         // Violate Y: 0 in f(0) and 0 in Odd(f(0))
         assert_eq!(
             check_def_geom(
-                &map! { 0: set!{0, 1} },
+                &hashmap! { 0 => hashset!{0, 1} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: PPlane::Y },
+                &hashmap! { 0 => PPlane::Y },
             ),
             Err(InconsistentFlowPPlane {
                 node: 0,
@@ -607,7 +608,7 @@ mod tests {
     #[test_log::test]
     fn test_find_case0() {
         let TestCase { g, iset, oset } = test_utils::CASE0.clone();
-        let pplanes = map! {};
+        let pplanes = hashmap! {};
         let flen = g.len() - oset.len();
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();
         assert_eq!(f.len(), flen);
@@ -618,11 +619,11 @@ mod tests {
     #[test_log::test]
     fn test_find_case1() {
         let TestCase { g, iset, oset } = test_utils::CASE1.clone();
-        let pplanes = map! {
-            0: PPlane::XY,
-            1: PPlane::XY,
-            2: PPlane::XY,
-            3: PPlane::XY
+        let pplanes = hashmap! {
+            0 => PPlane::XY,
+            1 => PPlane::XY,
+            2 => PPlane::XY,
+            3 => PPlane::XY
         };
         let flen = g.len() - oset.len();
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();
@@ -638,11 +639,11 @@ mod tests {
     #[test_log::test]
     fn test_find_case2() {
         let TestCase { g, iset, oset } = test_utils::CASE2.clone();
-        let pplanes = map! {
-            0: PPlane::XY,
-            1: PPlane::XY,
-            2: PPlane::XY,
-            3: PPlane::XY
+        let pplanes = hashmap! {
+            0 => PPlane::XY,
+            1 => PPlane::XY,
+            2 => PPlane::XY,
+            3 => PPlane::XY
         };
         let flen = g.len() - oset.len();
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();
@@ -658,10 +659,10 @@ mod tests {
     #[test_log::test]
     fn test_find_case3() {
         let TestCase { g, iset, oset } = test_utils::CASE3.clone();
-        let pplanes = map! {
-            0: PPlane::XY,
-            1: PPlane::XY,
-            2: PPlane::XY
+        let pplanes = hashmap! {
+            0 => PPlane::XY,
+            1 => PPlane::XY,
+            2 => PPlane::XY
         };
         let flen = g.len() - oset.len();
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();
@@ -676,11 +677,11 @@ mod tests {
     #[test_log::test]
     fn test_find_case4() {
         let TestCase { g, iset, oset } = test_utils::CASE4.clone();
-        let pplanes = map! {
-            0: PPlane::XY,
-            1: PPlane::XY,
-            2: PPlane::XZ,
-            3: PPlane::YZ
+        let pplanes = hashmap! {
+            0 => PPlane::XY,
+            1 => PPlane::XY,
+            2 => PPlane::XZ,
+            3 => PPlane::YZ
         };
         let flen = g.len() - oset.len();
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();
@@ -696,9 +697,9 @@ mod tests {
     #[test_log::test]
     fn test_find_case5() {
         let TestCase { g, iset, oset } = test_utils::CASE5.clone();
-        let pplanes = map! {
-            0: PPlane::XY,
-            1: PPlane::XY
+        let pplanes = hashmap! {
+            0 => PPlane::XY,
+            1 => PPlane::XY
         };
         assert!(find(g, iset, oset, pplanes).is_none());
     }
@@ -706,11 +707,11 @@ mod tests {
     #[test_log::test]
     fn test_find_case6() {
         let TestCase { g, iset, oset } = test_utils::CASE6.clone();
-        let pplanes = map! {
-            0: PPlane::XY,
-            1: PPlane::X,
-            2: PPlane::XY,
-            3: PPlane::X
+        let pplanes = hashmap! {
+            0 => PPlane::XY,
+            1 => PPlane::X,
+            2 => PPlane::XY,
+            3 => PPlane::X
         };
         let flen = g.len() - oset.len();
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();
@@ -726,11 +727,11 @@ mod tests {
     #[test_log::test]
     fn test_find_case7() {
         let TestCase { g, iset, oset } = test_utils::CASE7.clone();
-        let pplanes = map! {
-            0: PPlane::Z,
-            1: PPlane::Z,
-            2: PPlane::Y,
-            3: PPlane::Y
+        let pplanes = hashmap! {
+            0 => PPlane::Z,
+            1 => PPlane::Z,
+            2 => PPlane::Y,
+            3 => PPlane::Y
         };
         let flen = g.len() - oset.len();
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();
@@ -748,10 +749,10 @@ mod tests {
     #[test_log::test]
     fn test_find_case8() {
         let TestCase { g, iset, oset } = test_utils::CASE8.clone();
-        let pplanes = map! {
-            0: PPlane::Z,
-            1: PPlane::XZ,
-            2: PPlane::Y
+        let pplanes = hashmap! {
+            0 => PPlane::Z,
+            1 => PPlane::XZ,
+            2 => PPlane::Y
         };
         let flen = g.len() - oset.len();
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();

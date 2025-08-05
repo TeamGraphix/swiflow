@@ -23,6 +23,7 @@ thiserror = "2"
 tracing = { version = "0.1", features = ["release_max_level_off"] }
 
 [dev-dependencies]
+maplit = "1"
 rand = "0.9"
 rstest = "0.25"
 rstest_reuse = "0.7"

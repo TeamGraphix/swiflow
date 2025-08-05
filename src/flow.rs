@@ -149,6 +149,7 @@ pub fn verify(flow: (Flow, Option<Layers>), g: Graph, iset: Nodes, oset: Nodes) 
 
 #[cfg(test)]
 mod tests {
+    use maplit::hashmap;
     use test_log;
 
     use super::*;
@@ -158,13 +159,13 @@ mod tests {
     fn test_check_definition_ng() {
         // Violate 0 -> f(0) = 1
         assert_eq!(
-            check_def_layer(&map! { 0: 1 }, &[0, 0], &test_utils::graph(&[(0, 1)])),
+            check_def_layer(&hashmap! { 0 => 1 }, &[0, 0], &test_utils::graph(&[(0, 1)])),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate 1 in nb(f(0)) = nb(2) => 0 == 1 or 0 -> 1
         assert_eq!(
             check_def_layer(
-                &map! { 0: 2 },
+                &hashmap! { 0 => 2 },
                 &[1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)])
             ),
@@ -172,7 +173,7 @@ mod tests {
         );
         // Violate 0 in nb(f(0)) = nb(2)
         assert_eq!(
-            check_def_geom(&map! { 0: 2 }, &test_utils::graph(&[(0, 1), (1, 2)])),
+            check_def_geom(&hashmap! { 0 => 2 }, &test_utils::graph(&[(0, 1), (1, 2)])),
             Err(InconsistentFlowOrder { nodes: (0, 2) })
         );
     }
