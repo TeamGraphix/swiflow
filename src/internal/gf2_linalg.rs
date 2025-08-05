@@ -1,16 +1,12 @@
 //! GF(2) linear solver for gflow algorithm.
 
-use core::{
-    fmt::{self, Debug, Formatter},
-    ops::DerefMut,
-};
-use std::collections::BTreeMap;
+use core::{fmt::Debug, ops::DerefMut};
 
 use fixedbitset::FixedBitSet;
 use itertools::Itertools;
 
 /// Solver for GF(2) linear equations.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct GF2Solver<W> {
     /// Number of rows in the coefficient matrix.
     rows: usize,
@@ -245,37 +241,6 @@ impl<W: DerefMut<Target = [FixedBitSet]>> GF2Solver<W> {
             }
         }
         true
-    }
-}
-
-impl<W: DerefMut<Target = [FixedBitSet]>> Debug for GF2Solver<W> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let mut ret = f.debug_struct("GF2Solver");
-        ret.field("rows", &self.rows)
-            .field("cols", &self.cols)
-            .field("neqs", &self.neqs)
-            .field("rank", &self.rank)
-            .field("perm", &self.perm);
-        let mut work = BTreeMap::new();
-        for (r, row) in self.work.iter().enumerate() {
-            let mut s = String::with_capacity(self.cols);
-            for c in 0..self.cols {
-                s.push(if row[c] { '1' } else { '0' });
-            }
-            work.insert(r, s);
-        }
-        ret.field("co", &work);
-        let mut work = BTreeMap::new();
-        for (r, row) in self.work.iter().enumerate() {
-            let mut s = String::with_capacity(self.neqs);
-            for ieq in 0..self.neqs {
-                let c = self.cols + ieq;
-                s.push(if row[c] { '1' } else { '0' });
-            }
-            work.insert(r, s);
-        }
-        ret.field("rhs", &work);
-        ret.finish()
     }
 }
 
