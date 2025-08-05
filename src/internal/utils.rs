@@ -11,15 +11,18 @@ use fixedbitset::FixedBitSet;
 use crate::common::{Node, Nodes, OrderedNodes};
 
 /// Computes the odd neighbors of the nodes in `kset`.
-///
-/// # Note
-///
-/// - Naive implementation only for post-verification.
 pub fn odd_neighbors(g: &[Nodes], kset: &Nodes) -> Nodes {
     assert!(kset.iter().all(|&ki| ki < g.len()), "kset out of range");
-    let mut work = kset.clone();
-    work.extend(kset.iter().flat_map(|&ki| g[ki].iter().copied()));
-    work.retain(|&u| kset.intersection(&g[u]).count() % 2 == 1);
+    let mut work = Nodes::default();
+    for &k in kset {
+        for &u in &g[k] {
+            if work.contains(&u) {
+                work.remove(&u);
+            } else {
+                work.insert(u);
+            }
+        }
+    }
     work
 }
 
