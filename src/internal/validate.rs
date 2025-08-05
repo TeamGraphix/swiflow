@@ -43,10 +43,6 @@ pub fn check_initial(layers: &[usize], oset: &Nodes, iff: bool) -> Result<(), Fl
 /// - `vset`: All nodes.
 /// - `iset`: Input nodes.
 /// - `oset`: Output nodes.
-///
-/// # Note
-///
-/// It is allowed for `f[i]` to contain `i`, even if `i` is in `iset`.
 pub fn check_domain<'a, 'b>(
     f_flatiter: impl Iterator<Item = (&'a usize, &'b usize)>,
     vset: &Nodes,
@@ -58,7 +54,7 @@ pub fn check_domain<'a, 'b>(
     let mut dom = Nodes::new();
     for (&i, &fi) in f_flatiter {
         dom.insert(i);
-        if i != fi && !icset.contains(&fi) {
+        if !icset.contains(&fi) {
             Err(InvalidFlowCodomain { node: i })?;
         }
     }
