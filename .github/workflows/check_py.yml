@@ -29,8 +29,8 @@ jobs:
           uv pip install ruff
 
       - run: |
-          uv ruff check
-          uv ruff format --check --diff
+          uv run ruff check
+          uv run ruff format --check --diff
 
   staticcheck:
     runs-on: ubuntu-latest
