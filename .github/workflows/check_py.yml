@@ -25,6 +25,7 @@ jobs:
           python-version: "3.9"
 
       - run: |
+          uv venv
           uv pip install ruff
 
       - run: |
