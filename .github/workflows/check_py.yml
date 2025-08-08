@@ -24,21 +24,12 @@ jobs:
         with:
           python-version: "3.9"
 
-      - name: Setup Ruff
-        run: |
+      - run: |
           uv pip install ruff
 
-      - name: Run ruff check
-        run: |
+      - run: |
           uv ruff check
-
-      - name: Run ruff isort
-        run: |
-          uv ruff check --select I --fix
-
-      - name: Run ruff format
-        run: |
-          uv ruff format
+          uv ruff format --check --diff
 
   staticcheck:
     runs-on: ubuntu-latest
