@@ -45,7 +45,7 @@ jobs:
 
       - run: |
           # Require -e to pass pyright checks
-          uv pip install -e .[dev]
+          uv sync --extra dev
 
       - name: Run mypy
         run: |

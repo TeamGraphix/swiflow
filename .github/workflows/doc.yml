@@ -23,7 +23,7 @@ jobs:
           python-version: "3.13"
 
       - run: |
-          uv pip install -e .[dev,doc]
+          uv sync --extra dev --extra doc
 
       - run: |
           uv run sphinx-build docs/source docs/build -W -a
