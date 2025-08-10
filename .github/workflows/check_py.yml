@@ -20,27 +20,16 @@ jobs:
 
       - run: rustup update
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.9"
 
-      - name: Setup Ruff
-        run: |
-          python3 -m pip install -U pip
-          pip install ruff
+      - run: |
+          uv sync --extra dev
 
-      - name: Run ruff check
-        run: |
-          pip install ruff
-          ruff check
-
-      - name: Run ruff isort
-        run: |
-          ruff check --select I --fix
-
-      - name: Run ruff format
-        run: |
-          ruff format
+      - run: |
+          uv run ruff check
+          uv run ruff format --check --diff
 
   staticcheck:
     runs-on: ubuntu-latest
@@ -50,19 +39,18 @@ jobs:
 
       - run: rustup update
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.9"
 
       - run: |
-          python3 -m pip install -U pip
           # Require -e to pass pyright checks
-          pip install -e .[dev]
+          uv sync --extra dev
 
       - name: Run mypy
         run: |
-          mypy
+          uv run mypy
 
       - name: Run pyright
         run: |
-          pyright
+          uv run pyright

@@ -30,8 +30,8 @@ jobs:
 
       - name: Run rustfmt
         run: |
-          cargo +nightly fmt -- --check
+          cargo +nightly fmt --check
 
       - name: Run clippy
         run: |
-          cargo clippy -- -D warnings
+          cargo clippy --all-targets -- -D warnings
