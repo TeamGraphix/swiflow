@@ -6,26 +6,29 @@ See :footcite:t:`Mhalla2008` and :footcite:t:`Backens2021` for details.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Hashable, Mapping
+from collections.abc import Set as AbstractSet
+from typing import TYPE_CHECKING, TypeVar
 
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import gflow as gflow_bind
-from swiflow.common import GFlowResult, Plane, V
+from swiflow.common import GFlow, Layers, Plane
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-    from collections.abc import Set as AbstractSet
-
     import networkx as nx
+
+_V = TypeVar("_V", bound=Hashable)
+GFlowResult = tuple[GFlow[_V], Layers[_V]]
 
 
 def find(
-    g: nx.Graph[V],
-    iset: AbstractSet[V],
-    oset: AbstractSet[V],
-    plane: Mapping[V, Plane] | None = None,
-) -> GFlowResult[V] | None:
+    g: nx.Graph[_V],
+    iset: AbstractSet[_V],
+    oset: AbstractSet[_V],
+    *,
+    planes: Mapping[_V, Plane] | None = None,
+) -> GFlowResult[_V] | None:
     r"""Compute generalized flow.
 
     If it returns a gflow, it is guaranteed to be maximally-delayed, i.e., the number of layers is minimized.
@@ -38,45 +41,60 @@ def find(
         Input nodes.
     oset : `collections.abc.Set`
         Output nodes.
-    plane : `collections.abc.Mapping`
+    planes : `collections.abc.Mapping`
         Measurement plane for each node in :math:`V \setminus O`.
         Defaults to `Plane.XY`.
 
     Returns
     -------
-    `GFlowResult` or `None`
+    `tuple` of gflow/layers or `None`
         Return the gflow if any, otherwise `None`.
     """
     _common.check_graph(g, iset, oset)
     vset = g.nodes
-    if plane is None:
-        plane = dict.fromkeys(vset - oset, Plane.XY)
-    _common.check_planelike(vset, oset, plane)
+    if planes is None:
+        planes = dict.fromkeys(vset - oset, Plane.XY)
+    _common.check_planelike(vset, oset, planes)
     codec = IndexMap(vset)
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    plane_ = codec.encode_dictkey(plane)
-    if ret_ := gflow_bind.find(g_, iset_, oset_, plane_):
-        f_, layer_ = ret_
+    planes_ = codec.encode_dictkey(planes)
+    if ret_ := gflow_bind.find(g_, iset_, oset_, planes_):
+        f_, layers_ = ret_
         f = codec.decode_gflow(f_)
-        layer = codec.decode_layer(layer_)
-        return GFlowResult(f, layer)
+        layers = codec.decode_layers(layers_)
+        return f, layers
     return None
 
 
+_GFlow = Mapping[_V, AbstractSet[_V]]
+_Layer = Mapping[_V, int]
+
+
+def _codec_wrap(
+    codec: IndexMap[_V],
+    gflow: tuple[_GFlow[_V], _Layer[_V]] | _GFlow[_V],
+) -> tuple[dict[int, set[int]], list[int] | None]:
+    if isinstance(gflow, tuple):
+        f, layers = gflow
+        return codec.encode_gflow(f), codec.encode_layers(layers)
+    return codec.encode_gflow(gflow), None
+
+
 def verify(
-    gflow: GFlowResult[V],
-    g: nx.Graph[V],
-    iset: AbstractSet[V],
-    oset: AbstractSet[V],
-    plane: Mapping[V, Plane] | None = None,
+    gflow: tuple[_GFlow[_V], _Layer[_V]] | _GFlow[_V],
+    g: nx.Graph[_V],
+    iset: AbstractSet[_V],
+    oset: AbstractSet[_V],
+    *,
+    planes: Mapping[_V, Plane] | None = None,
 ) -> None:
-    r"""Verify maximally-delayed generalized flow.
+    r"""Verify generalized flow.
 
     Parameters
     ----------
-    gflow : `GFlowResult`
+    gflow : gflow (required) and layers (optional)
         Generalized flow to verify.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.
@@ -84,7 +102,7 @@ def verify(
         Input nodes.
     oset : `collections.abc.Set`
         Output nodes.
-    plane : `collections.abc.Mapping`
+    planes : `collections.abc.Mapping`
         Measurement plane for each node in :math:`V \setminus O`.
         Defaults to `Plane.XY`.
 
@@ -95,13 +113,11 @@ def verify(
     """
     _common.check_graph(g, iset, oset)
     vset = g.nodes
-    if plane is None:
-        plane = dict.fromkeys(vset - oset, Plane.XY)
+    if planes is None:
+        planes = dict.fromkeys(vset - oset, Plane.XY)
     codec = IndexMap(vset)
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    plane_ = codec.encode_dictkey(plane)
-    f_ = codec.encode_gflow(gflow.f)
-    layer_ = codec.encode_layer(gflow.layer)
-    codec.ecatch(gflow_bind.verify, (f_, layer_), g_, iset_, oset_, plane_)
+    planes_ = codec.encode_dictkey(planes)
+    codec.ecatch(gflow_bind.verify, _codec_wrap(codec, gflow), g_, iset_, oset_, planes_)

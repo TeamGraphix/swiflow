@@ -7,30 +7,38 @@ use crate::{
     common::{
         FATAL_MSG,
         FlowValidationError::{self, InconsistentFlowOrder},
-        Graph, Layer, Nodes,
+        Graph, Layers, Nodes,
     },
     internal::{utils::InPlaceSetDiff, validate},
 };
 
 type Flow = hashbrown::HashMap<usize, usize>;
 
-/// Checks the definition of causal flow.
+/// Checks the geometric constraints of flow.
 ///
-/// 1. i -> f(i)
-/// 2. j in neighbors(f(i)) => i == j or i -> j
-/// 3. i in neighbors(f(i))
-fn check_definition(f: &Flow, layer: &Layer, g: &Graph) -> Result<(), FlowValidationError> {
+/// - i in N(f(i))
+fn check_def_geom(f: &Flow, g: &[Nodes]) -> Result<(), FlowValidationError> {
     for (&i, &fi) in f {
-        if layer[i] <= layer[fi] {
+        if !g[i].contains(&fi) {
+            Err(InconsistentFlowOrder { nodes: (i, fi) })?;
+        }
+    }
+    Ok(())
+}
+
+/// Checks the layer constraints of flow.
+///
+/// - i -> f(i)
+/// - j in N(f(i)) => i == j or i -> j
+fn check_def_layer(f: &Flow, layers: &[usize], g: &[Nodes]) -> Result<(), FlowValidationError> {
+    for (&i, &fi) in f {
+        if layers[i] <= layers[fi] {
             Err(InconsistentFlowOrder { nodes: (i, fi) })?;
         }
         for &j in &g[fi] {
-            if i != j && layer[i] <= layer[j] {
+            if i != j && layers[i] <= layers[j] {
                 Err(InconsistentFlowOrder { nodes: (i, j) })?;
             }
-        }
-        if !(g[fi].contains(&i) && g[i].contains(&fi)) {
-            Err(InconsistentFlowOrder { nodes: (i, fi) })?;
         }
     }
     Ok(())
@@ -56,7 +64,7 @@ fn check_definition(f: &Flow, layer: &Layer, g: &Graph) -> Result<(), FlowValida
 #[tracing::instrument]
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
-pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
+pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layers)> {
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     let mut cset = &oset - &iset;
@@ -64,7 +72,7 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
     let ocset = &vset - &oset;
     let oset_orig = oset.clone();
     let mut f = Flow::with_capacity(ocset.len());
-    let mut layer = vec![0_usize; n];
+    let mut layers = vec![0_usize; n];
     // check[v] = g[v] & (vset - oset)
     let mut check = g.iter().map(|x| x & &ocset).collect::<Vec<_>>();
     let mut oset_work = Nodes::new();
@@ -82,7 +90,7 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
             tracing::debug!("f({u}) = {v}");
             f.insert(u, v);
             tracing::debug!("layer({u}) = {l}");
-            layer[u] = l;
+            layers[u] = l;
             oset_work.insert(u);
             cset_work.insert(v);
         }
@@ -102,14 +110,15 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
     if oset == vset {
         tracing::debug!("flow found");
         tracing::debug!("flow : {f:?}");
-        tracing::debug!("layer: {layer:?}");
+        tracing::debug!("layers: {layers:?}");
         // TODO: Remove this block once stabilized
         {
             validate::check_domain(f.iter(), &vset, &iset, &oset_orig).expect(FATAL_MSG);
-            validate::check_initial(&layer, &oset_orig, true).expect(FATAL_MSG);
-            check_definition(&f, &layer, &g).expect(FATAL_MSG);
+            validate::check_initial(&layers, &oset_orig, true).expect(FATAL_MSG);
+            check_def_geom(&f, &g).expect(FATAL_MSG);
+            check_def_layer(&f, &layers, &g).expect(FATAL_MSG);
         }
-        Some((f, layer))
+        Some((f, layers))
     } else {
         tracing::debug!("flow not found");
         None
@@ -125,13 +134,15 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layer)> {
 #[pyfunction]
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
-pub fn verify(flow: (Flow, Layer), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
-    let (f, layer) = flow;
+pub fn verify(flow: (Flow, Option<Layers>), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
+    let (f, layers) = flow;
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     validate::check_domain(f.iter(), &vset, &iset, &oset)?;
-    validate::check_initial(&layer, &oset, true)?;
-    check_definition(&f, &layer, &g)?;
+    check_def_geom(&f, &g)?;
+    if let Some(layers) = layers {
+        check_def_layer(&f, &layers, &g)?;
+    }
     Ok(())
 }
 
@@ -146,25 +157,21 @@ mod tests {
     fn test_check_definition_ng() {
         // Violate 0 -> f(0) = 1
         assert_eq!(
-            check_definition(&map! { 0: 1 }, &vec![0, 0], &test_utils::graph(&[(0, 1)])),
+            check_def_layer(&map! { 0: 1 }, &[0, 0], &test_utils::graph(&[(0, 1)])),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate 1 in nb(f(0)) = nb(2) => 0 == 1 or 0 -> 1
         assert_eq!(
-            check_definition(
+            check_def_layer(
                 &map! { 0: 2 },
-                &vec![1, 1, 0],
+                &[1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)])
             ),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate 0 in nb(f(0)) = nb(2)
         assert_eq!(
-            check_definition(
-                &map! { 0: 2 },
-                &vec![2, 1, 0],
-                &test_utils::graph(&[(0, 1), (1, 2)])
-            ),
+            check_def_geom(&map! { 0: 2 }, &test_utils::graph(&[(0, 1), (1, 2)])),
             Err(InconsistentFlowOrder { nodes: (0, 2) })
         );
     }
@@ -173,38 +180,38 @@ mod tests {
     fn test_find_case0() {
         let TestCase { g, iset, oset } = test_utils::CASE0.clone();
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
         assert_eq!(f.len(), flen);
-        assert_eq!(layer, vec![0, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        assert_eq!(layers, vec![0, 0]);
+        verify((f, Some(layers)), g, iset, oset).unwrap();
     }
 
     #[test_log::test]
     fn test_find_case1() {
         let TestCase { g, iset, oset } = test_utils::CASE1.clone();
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], 1);
         assert_eq!(f[&1], 2);
         assert_eq!(f[&2], 3);
         assert_eq!(f[&3], 4);
-        assert_eq!(layer, vec![4, 3, 2, 1, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        assert_eq!(layers, vec![4, 3, 2, 1, 0]);
+        verify((f, Some(layers)), g, iset, oset).unwrap();
     }
 
     #[test_log::test]
     fn test_find_case2() {
         let TestCase { g, iset, oset } = test_utils::CASE2.clone();
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], 2);
         assert_eq!(f[&1], 3);
         assert_eq!(f[&2], 4);
         assert_eq!(f[&3], 5);
-        assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset).unwrap();
+        assert_eq!(layers, vec![2, 2, 1, 1, 0, 0]);
+        verify((f, Some(layers)), g, iset, oset).unwrap();
     }
 
     #[test_log::test]

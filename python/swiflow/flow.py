@@ -6,20 +6,24 @@ See :footcite:t:`Mhalla2008` for details.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Hashable, Mapping
+from typing import TYPE_CHECKING, TypeVar
 
 from swiflow import _common
 from swiflow._common import IndexMap
 from swiflow._impl import flow as flow_bind
-from swiflow.common import FlowResult, V
+from swiflow.common import Flow, Layers
 
 if TYPE_CHECKING:
     from collections.abc import Set as AbstractSet
 
     import networkx as nx
 
+_V = TypeVar("_V", bound=Hashable)
+FlowResult = tuple[Flow[_V], Layers[_V]]
 
-def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResult[V] | None:
+
+def find(g: nx.Graph[_V], iset: AbstractSet[_V], oset: AbstractSet[_V]) -> FlowResult[_V] | None:
     """Compute causal flow.
 
     If it returns a flow, it is guaranteed to be maximally-delayed, i.e., the number of layers is minimized.
@@ -35,7 +39,7 @@ def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResu
 
     Returns
     -------
-    `FlowResult` or `None`
+    `tuple` of flow/layers or `None`
         Return the flow if any, otherwise `None`.
     """
     _common.check_graph(g, iset, oset)
@@ -45,19 +49,38 @@ def find(g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> FlowResu
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
     if ret_ := flow_bind.find(g_, iset_, oset_):
-        f_, layer_ = ret_
+        f_, layers_ = ret_
         f = codec.decode_flow(f_)
-        layer = codec.decode_layer(layer_)
-        return FlowResult(f, layer)
+        layers = codec.decode_layers(layers_)
+        return f, layers
     return None
 
 
-def verify(flow: FlowResult[V], g: nx.Graph[V], iset: AbstractSet[V], oset: AbstractSet[V]) -> None:
-    """Verify maximally-delayed causal flow.
+_Flow = Mapping[_V, _V]
+_Layer = Mapping[_V, int]
+
+
+def _codec_wrap(
+    codec: IndexMap[_V],
+    flow: tuple[_Flow[_V], _Layer[_V]] | _Flow[_V],
+) -> tuple[dict[int, int], list[int] | None]:
+    if isinstance(flow, tuple):
+        f, layers = flow
+        return codec.encode_flow(f), codec.encode_layers(layers)
+    return codec.encode_flow(flow), None
+
+
+def verify(
+    flow: tuple[_Flow[_V], _Layer[_V]] | _Flow[_V],
+    g: nx.Graph[_V],
+    iset: AbstractSet[_V],
+    oset: AbstractSet[_V],
+) -> None:
+    """Verify causal flow.
 
     Parameters
     ----------
-    flow : `FlowResult`
+    flow : flow (required) and layers (optional)
         Flow to verify.
     g : `networkx.Graph`
         Simple graph representing MBQC pattern.
@@ -77,6 +100,4 @@ def verify(flow: FlowResult[V], g: nx.Graph[V], iset: AbstractSet[V], oset: Abst
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    f_ = codec.encode_flow(flow.f)
-    layer_ = codec.encode_layer(flow.layer)
-    codec.ecatch(flow_bind.verify, (f_, layer_), g_, iset_, oset_)
+    codec.ecatch(flow_bind.verify, _codec_wrap(codec, flow), g_, iset_, oset_)
