@@ -80,16 +80,6 @@ _PFlow = Mapping[_V, AbstractSet[_V]]
 _Layer = Mapping[_V, int]
 
 
-def _codec_wrap(
-    codec: IndexMap[_V],
-    pflow: tuple[_PFlow[_V], _Layer[_V]] | _PFlow[_V],
-) -> tuple[dict[int, set[int]], list[int] | None]:
-    if isinstance(pflow, tuple):
-        f, layers = pflow
-        return codec.encode_gflow(f), codec.encode_layers(layers)
-    return codec.encode_gflow(pflow), None
-
-
 def verify(
     pflow: tuple[_PFlow[_V], _Layer[_V]] | _PFlow[_V],
     g: nx.Graph[_V],
