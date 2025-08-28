@@ -54,7 +54,7 @@ def _infer_layers_impl(pred: Mapping[_V, MutableSet[_V]], succ: Mapping[_V, Abst
                     next_work.add(v)
         work = next_work
     if len(ret) != len(succ):
-        msg = "Failed to determine layers for all nodes."
+        msg = "Cannot satisfy all the partial order constraints."
         raise ValueError(msg)
     return ret
 

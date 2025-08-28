@@ -142,5 +142,5 @@ class TestInferLayer:
     def test_cycle(self) -> None:
         g: nx.Graph[int] = nx.Graph([(0, 1), (1, 2), (2, 0)])
         flow = {0: {1}, 1: {2}, 2: {0}}
-        with pytest.raises(ValueError, match=r".*determine.*"):
+        with pytest.raises(ValueError, match=r".*constraints.*"):
             common.infer_layers(g, flow)
