@@ -444,7 +444,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, pplanes: PPlanes) -> Option<(PFl
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
 pub fn verify(
-    pflow: (PFlow, Option<Layers>),
+    pflow: (PFlow, Layers),
     g: Graph,
     iset: Nodes,
     oset: Nodes,
@@ -458,9 +458,7 @@ pub fn verify(
         .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
     common::check_domain(f_flatiter, &vset, &iset, &oset)?;
     check_def_geom(&f, &g, &pplanes)?;
-    if let Some(layers) = layers {
-        check_def_layer(&f, &layers, &g, &pplanes)?;
-    }
+    check_def_layer(&f, &layers, &g, &pplanes)?;
     Ok(())
 }
 
@@ -613,7 +611,7 @@ mod tests {
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), pplanes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(layers, vec![0, 0]);
-        verify((f, Some(layers)), g, iset, oset, pplanes).unwrap();
+        verify((f, layers), g, iset, oset, pplanes).unwrap();
     }
 
     #[test_log::test]
@@ -633,7 +631,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([3]));
         assert_eq!(f[&3], Nodes::from([4]));
         assert_eq!(layers, vec![4, 3, 2, 1, 0]);
-        verify((f, Some(layers)), g, iset, oset, pplanes).unwrap();
+        verify((f, layers), g, iset, oset, pplanes).unwrap();
     }
 
     #[test_log::test]
@@ -653,7 +651,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([4]));
         assert_eq!(f[&3], Nodes::from([5]));
         assert_eq!(layers, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, Some(layers)), g, iset, oset, pplanes).unwrap();
+        verify((f, layers), g, iset, oset, pplanes).unwrap();
     }
 
     #[test_log::test]
@@ -671,7 +669,7 @@ mod tests {
         assert_eq!(f[&1], Nodes::from([3, 4, 5]));
         assert_eq!(f[&2], Nodes::from([3, 5]));
         assert_eq!(layers, vec![1, 1, 1, 0, 0, 0]);
-        verify((f, Some(layers)), g, iset, oset, pplanes).unwrap();
+        verify((f, layers), g, iset, oset, pplanes).unwrap();
     }
 
     #[test_log::test]
@@ -691,7 +689,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([2, 4]));
         assert_eq!(f[&3], Nodes::from([3]));
         assert_eq!(layers, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, Some(layers)), g, iset, oset, pplanes).unwrap();
+        verify((f, layers), g, iset, oset, pplanes).unwrap();
     }
 
     #[test_log::test]
@@ -721,7 +719,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([3]));
         assert_eq!(f[&3], Nodes::from([2, 4]));
         assert_eq!(layers, vec![1, 1, 0, 1, 0]);
-        verify((f, Some(layers)), g, iset, oset, pplanes).unwrap();
+        verify((f, layers), g, iset, oset, pplanes).unwrap();
     }
 
     #[test_log::test]
@@ -743,7 +741,7 @@ mod tests {
         assert_eq!(f[&2], Nodes::from([2]));
         assert_eq!(f[&3], Nodes::from([4]));
         assert_eq!(layers, vec![1, 0, 0, 1, 0]);
-        verify((f, Some(layers)), g, iset, oset, pplanes).unwrap();
+        verify((f, layers), g, iset, oset, pplanes).unwrap();
     }
 
     #[test_log::test]
@@ -763,6 +761,6 @@ mod tests {
         assert_eq!(f[&1], Nodes::from([1, 2]));
         assert_eq!(f[&2], Nodes::from([4]));
         assert_eq!(layers, vec![1, 1, 1, 0, 0]);
-        verify((f, Some(layers)), g, iset, oset, pplanes).unwrap();
+        verify((f, layers), g, iset, oset, pplanes).unwrap();
     }
 }

@@ -10,7 +10,7 @@ def find(
     g: list[set[int]], iset: set[int], oset: set[int], pplanes: dict[int, PPlane]
 ) -> tuple[dict[int, set[int]], list[int]] | None: ...
 def verify(
-    pflow: tuple[dict[int, set[int]], list[int] | None],
+    pflow: tuple[dict[int, set[int]], list[int]],
     g: list[set[int]],
     iset: set[int],
     oset: set[int],

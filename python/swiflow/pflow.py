@@ -11,7 +11,7 @@ from collections.abc import Hashable, Mapping
 from collections.abc import Set as AbstractSet
 from typing import TYPE_CHECKING, TypeVar
 
-from swiflow import _common
+from swiflow import _common, common
 from swiflow._common import IndexMap
 from swiflow._impl import pflow as pflow_bind
 from swiflow.common import Layers, PFlow, PPlane
@@ -128,4 +128,11 @@ def verify(
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
     pplanes_ = codec.encode_dictkey(pplanes)
-    codec.ecatch(pflow_bind.verify, _codec_wrap(codec, pflow), g_, iset_, oset_, pplanes_)
+    if isinstance(pflow, tuple):
+        f, layers = pflow
+        common.infer_layers(g, f, pplanes)
+    else:
+        f = pflow
+        layers = common.infer_layers(g, f, pplanes)
+    f_ = (codec.encode_gflow(f), codec.encode_layers(layers))
+    codec.ecatch(pflow_bind.verify, f_, g_, iset_, oset_, pplanes_)

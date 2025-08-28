@@ -135,15 +135,13 @@ pub fn find(g: Graph, iset: Nodes, mut oset: Nodes) -> Option<(Flow, Layers)> {
 #[pyfunction]
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
-pub fn verify(flow: (Flow, Option<Layers>), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
+pub fn verify(flow: (Flow, Layers), g: Graph, iset: Nodes, oset: Nodes) -> PyResult<()> {
     let (f, layers) = flow;
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     common::check_domain(f.iter(), &vset, &iset, &oset)?;
     check_def_geom(&f, &g)?;
-    if let Some(layers) = layers {
-        check_def_layer(&f, &layers, &g)?;
-    }
+    check_def_layer(&f, &layers, &g)?;
     Ok(())
 }
 
@@ -185,7 +183,7 @@ mod tests {
         let (f, layers) = find(g.clone(), iset.clone(), oset.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(layers, vec![0, 0]);
-        verify((f, Some(layers)), g, iset, oset).unwrap();
+        verify((f, layers), g, iset, oset).unwrap();
     }
 
     #[test_log::test]
@@ -199,7 +197,7 @@ mod tests {
         assert_eq!(f[&2], 3);
         assert_eq!(f[&3], 4);
         assert_eq!(layers, vec![4, 3, 2, 1, 0]);
-        verify((f, Some(layers)), g, iset, oset).unwrap();
+        verify((f, layers), g, iset, oset).unwrap();
     }
 
     #[test_log::test]
@@ -213,7 +211,7 @@ mod tests {
         assert_eq!(f[&2], 4);
         assert_eq!(f[&3], 5);
         assert_eq!(layers, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, Some(layers)), g, iset, oset).unwrap();
+        verify((f, layers), g, iset, oset).unwrap();
     }
 
     #[test_log::test]

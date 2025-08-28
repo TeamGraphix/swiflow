@@ -10,7 +10,7 @@ from collections.abc import Hashable, Mapping
 from collections.abc import Set as AbstractSet
 from typing import TYPE_CHECKING, TypeVar
 
-from swiflow import _common
+from swiflow import _common, common
 from swiflow._common import IndexMap
 from swiflow._impl import gflow as gflow_bind
 from swiflow.common import GFlow, Layers, Plane
@@ -72,16 +72,6 @@ _GFlow = Mapping[_V, AbstractSet[_V]]
 _Layer = Mapping[_V, int]
 
 
-def _codec_wrap(
-    codec: IndexMap[_V],
-    gflow: tuple[_GFlow[_V], _Layer[_V]] | _GFlow[_V],
-) -> tuple[dict[int, set[int]], list[int] | None]:
-    if isinstance(gflow, tuple):
-        f, layers = gflow
-        return codec.encode_gflow(f), codec.encode_layers(layers)
-    return codec.encode_gflow(gflow), None
-
-
 def verify(
     gflow: tuple[_GFlow[_V], _Layer[_V]] | _GFlow[_V],
     g: nx.Graph[_V],
@@ -120,4 +110,11 @@ def verify(
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
     planes_ = codec.encode_dictkey(planes)
-    codec.ecatch(gflow_bind.verify, _codec_wrap(codec, gflow), g_, iset_, oset_, planes_)
+    if isinstance(gflow, tuple):
+        f, layers = gflow
+        common.infer_layers(g, f)
+    else:
+        f = gflow
+        layers = common.infer_layers(g, f)
+    f_ = (codec.encode_gflow(f), codec.encode_layers(layers))
+    codec.ecatch(gflow_bind.verify, f_, g_, iset_, oset_, planes_)

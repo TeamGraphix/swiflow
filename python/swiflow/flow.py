@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Hashable, Mapping
 from typing import TYPE_CHECKING, TypeVar
 
-from swiflow import _common
+from swiflow import _common, common
 from swiflow._common import IndexMap
 from swiflow._impl import flow as flow_bind
 from swiflow.common import Flow, Layers
@@ -60,16 +60,6 @@ _Flow = Mapping[_V, _V]
 _Layer = Mapping[_V, int]
 
 
-def _codec_wrap(
-    codec: IndexMap[_V],
-    flow: tuple[_Flow[_V], _Layer[_V]] | _Flow[_V],
-) -> tuple[dict[int, int], list[int] | None]:
-    if isinstance(flow, tuple):
-        f, layers = flow
-        return codec.encode_flow(f), codec.encode_layers(layers)
-    return codec.encode_flow(flow), None
-
-
 def verify(
     flow: tuple[_Flow[_V], _Layer[_V]] | _Flow[_V],
     g: nx.Graph[_V],
@@ -100,4 +90,11 @@ def verify(
     g_ = codec.encode_graph(g)
     iset_ = codec.encode_set(iset)
     oset_ = codec.encode_set(oset)
-    codec.ecatch(flow_bind.verify, _codec_wrap(codec, flow), g_, iset_, oset_)
+    if isinstance(flow, tuple):
+        f, layers = flow
+        common.infer_layers(g, f)
+    else:
+        f = flow
+        layers = common.infer_layers(g, f)
+    f_ = (codec.encode_flow(f), codec.encode_layers(layers))
+    codec.ecatch(flow_bind.verify, f_, g_, iset_, oset_)
