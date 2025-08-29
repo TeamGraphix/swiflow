@@ -264,6 +264,7 @@ fn decode_solution<const K: BranchKind>(u: Node, x: &FixedBitSet, colset: &Order
         .filter_map(|(i, &v)| if x[i] { Some(v) } else { None })
         .collect::<Nodes>();
     if K != BRANCH_XY {
+        // MEMO: Violating `f(u) in V\I` ?
         fu.insert(u);
     }
     fu
