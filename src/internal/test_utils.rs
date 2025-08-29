@@ -2,29 +2,10 @@
 
 use std::sync::LazyLock;
 
-use crate::common::{Graph, Nodes};
-
-pub mod exports {
-    pub use hashbrown::{HashMap, HashSet};
-}
-
-macro_rules! map {
-    ($($u:literal: $v:expr),*) => {
-        // Dirty .expect to handle i32 -> usize conversion
-        $crate::internal::test_utils::exports::HashMap::from_iter([$(($u, ($v).try_into().expect("dynamic coersion"))),*].into_iter())
-    };
-    ($($u:literal: $v:expr),*,) => {map! { $($u: $v),* }};
-}
-
-macro_rules! set {
-    ($($u:literal),*) => {
-        $crate::internal::test_utils::exports::HashSet::from_iter([$($u),*].into_iter())
-    };
-    ($($u:literal),*,) => {set! { $($u),* }};
-}
+use crate::common::{Graph, Node, Nodes};
 
 /// Creates a undirected graph from edges.
-pub fn graph<const N: usize>(edges: &[(usize, usize); N]) -> Graph {
+pub fn graph<const N: usize>(edges: &[(Node, Node); N]) -> Graph {
     let n = edges
         .iter()
         .map(|&(u, v)| u.max(v) + 1)
@@ -174,22 +155,22 @@ mod tests {
     /// Checks if the graph is valid.
     ///
     /// In production code, this check should be done in the Python layer.
-    fn check_graph(g: &Graph, iset: &Nodes, oset: &Nodes) {
+    fn check_graph(g: &[Nodes], iset: &Nodes, oset: &Nodes) {
         let n = g.len();
         assert_ne!(n, 0, "empty graph");
         for (u, gu) in g.iter().enumerate() {
             assert!(!gu.contains(&u), "self-loop detected: {u}");
-            gu.iter().for_each(|&v| {
+            for &v in gu {
                 assert!(v < n, "node index out of range: {v}");
                 assert!(g[v].contains(&u), "g must be undirected: {u} -> {v}");
-            });
+            }
         }
-        iset.iter().for_each(|&u| {
+        for &u in iset {
             assert!((0..n).contains(&u), "unknown node in iset: {u}");
-        });
-        oset.iter().for_each(|&u| {
+        }
+        for &u in oset {
             assert!((0..n).contains(&u), "unknown node in oset: {u}");
-        });
+        }
     }
 
     #[apply(template_tests)]

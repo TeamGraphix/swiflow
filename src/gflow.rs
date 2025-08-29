@@ -1,23 +1,22 @@
 //! Maximally-delayed generalized flow algorithm.
 
 use core::iter;
+use std::collections::HashMap;
 
 use fixedbitset::FixedBitSet;
-use hashbrown;
 use pyo3::prelude::*;
 
 use crate::{
     common::{
-        FATAL_MSG,
+        self, FATAL_MSG,
         FlowValidationError::{
             self, InconsistentFlowOrder, InconsistentFlowPlane, InvalidMeasurementSpec,
         },
-        Graph, Layer, Nodes, OrderedNodes,
+        Graph, Layer, Layers, Node, Nodes, OrderedNodes,
     },
     internal::{
         gf2_linalg::GF2Solver,
         utils::{self, InPlaceSetDiff},
-        validate,
     },
 };
 
@@ -30,40 +29,23 @@ pub enum Plane {
     XZ,
 }
 
-type Planes = hashbrown::HashMap<usize, Plane>;
-type GFlow = hashbrown::HashMap<usize, Nodes>;
+type Planes = HashMap<Node, Plane>;
+type GFlow = HashMap<Node, Nodes>;
 
-/// Checks the definition of gflow.
+/// Checks the geometric constraints of gflow.
 ///
-/// 1. i -> g(i)
-/// 2. j in Odd(g(i)) => i == j or i -> j
-/// 3. i not in g(i) and in Odd(g(i)) if plane(i) == XY
-/// 4. i in g(i) and in Odd(g(i)) if plane(i) == YZ
-/// 5. i in g(i) and not in Odd(g(i)) if plane(i) == XZ
-fn check_definition(
-    f: &GFlow,
-    layer: &Layer,
-    g: &Graph,
-    planes: &Planes,
-) -> Result<(), FlowValidationError> {
-    for &i in itertools::chain(f.keys(), planes.keys()) {
+/// - XY: i not in g(i) and in Odd(g(i))
+/// - YZ: i in g(i) and in Odd(g(i))
+/// - XZ: i in g(i) and not in Odd(g(i))
+fn check_def_geom(f: &GFlow, g: &[Nodes], planes: &Planes) -> Result<(), FlowValidationError> {
+    for &i in Iterator::chain(f.keys(), planes.keys()) {
         if f.contains_key(&i) != planes.contains_key(&i) {
             Err(InvalidMeasurementSpec { node: i })?;
         }
     }
     for (&i, fi) in f {
         let pi = planes[&i];
-        for &fij in fi {
-            if i != fij && layer[i] <= layer[fij] {
-                Err(InconsistentFlowOrder { nodes: (i, fij) })?;
-            }
-        }
         let odd_fi = utils::odd_neighbors(g, fi);
-        for &j in &odd_fi {
-            if i != j && layer[i] <= layer[j] {
-                Err(InconsistentFlowOrder { nodes: (i, j) })?;
-            }
-        }
         let in_info = (fi.contains(&i), odd_fi.contains(&i));
         match pi {
             Plane::XY if in_info != (false, true) => {
@@ -90,18 +72,39 @@ fn check_definition(
     Ok(())
 }
 
+/// Checks the layer constraints of gflow.
+///
+/// - i -> g(i)
+/// - j in Odd(g(i)) => i == j or i -> j
+fn check_def_layer(f: &GFlow, layers: &[Layer], g: &[Nodes]) -> Result<(), FlowValidationError> {
+    for (&i, fi) in f {
+        for &fij in fi {
+            if i != fij && layers[i] <= layers[fij] {
+                Err(InconsistentFlowOrder { nodes: (i, fij) })?;
+            }
+        }
+        let odd_fi = utils::odd_neighbors(g, fi);
+        for &j in &odd_fi {
+            if i != j && layers[i] <= layers[j] {
+                Err(InconsistentFlowOrder { nodes: (i, j) })?;
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Initializes the working matrix.
 fn init_work(
     work: &mut [FixedBitSet],
-    g: &Graph,
+    g: &[Nodes],
     planes: &Planes,
     ocset: &OrderedNodes,
     omiset: &OrderedNodes,
 ) {
     let ncols = omiset.len();
     // Set-to-index maps
-    let oc2i = utils::indexmap::<hashbrown::HashMap<_, _>>(ocset);
-    let omi2i = utils::indexmap::<hashbrown::HashMap<_, _>>(omiset);
+    let oc2i = utils::indexmap::<HashMap<_, _>>(ocset);
+    let omi2i = utils::indexmap::<HashMap<_, _>>(omiset);
     // Encode node as one-hot vector
     for (i, &u) in ocset.iter().enumerate() {
         let gu = &g[u];
@@ -152,7 +155,7 @@ fn init_work(
 #[tracing::instrument]
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
-pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow, Layer)> {
+pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow, Layers)> {
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     let mut cset = Nodes::new();
@@ -160,7 +163,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
     let mut ocset = vset.difference(&oset).copied().collect::<OrderedNodes>();
     let mut omiset = oset.difference(&iset).copied().collect::<OrderedNodes>();
     let mut f = GFlow::with_capacity(ocset.len());
-    let mut layer = vec![0_usize; n];
+    let mut layers = vec![0_usize; n];
     let mut nrows = ocset.len();
     let mut ncols = omiset.len();
     let mut neqs = ocset.len();
@@ -210,7 +213,7 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
             tracing::debug!("f({u}) = {fu:?}");
             f.insert(u, fu);
             tracing::debug!("layer({u}) = {l}");
-            layer[u] = l;
+            layers[u] = l;
         }
         if cset.is_empty() {
             break;
@@ -221,17 +224,18 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
     if ocset.is_empty() {
         tracing::debug!("gflow found");
         tracing::debug!("gflow: {f:?}");
-        tracing::debug!("layer: {layer:?}");
+        tracing::debug!("layers: {layers:?}");
         // TODO: Remove this block once stabilized
         {
             let f_flatiter = f
                 .iter()
                 .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
-            validate::check_domain(f_flatiter, &vset, &iset, &oset).expect(FATAL_MSG);
-            validate::check_initial(&layer, &oset, true).expect(FATAL_MSG);
-            check_definition(&f, &layer, &g, &planes).expect(FATAL_MSG);
+            common::check_domain(f_flatiter, &vset, &iset, &oset).expect(FATAL_MSG);
+            common::check_initial(&layers, &oset, true).expect(FATAL_MSG);
+            check_def_geom(&f, &g, &planes).expect(FATAL_MSG);
+            check_def_layer(&f, &layers, &g).expect(FATAL_MSG);
         }
-        Some((f, layer))
+        Some((f, layers))
     } else {
         tracing::debug!("gflow not found");
         None
@@ -248,26 +252,27 @@ pub fn find(g: Graph, iset: Nodes, oset: Nodes, planes: Planes) -> Option<(GFlow
 #[expect(clippy::needless_pass_by_value)]
 #[inline]
 pub fn verify(
-    gflow: (GFlow, Layer),
+    gflow: (GFlow, Layers),
     g: Graph,
     iset: Nodes,
     oset: Nodes,
     planes: Planes,
 ) -> PyResult<()> {
-    let (f, layer) = gflow;
+    let (f, layers) = gflow;
     let n = g.len();
     let vset = (0..n).collect::<Nodes>();
     let f_flatiter = f
         .iter()
         .flat_map(|(i, fi)| Iterator::zip(iter::repeat(i), fi.iter()));
-    validate::check_domain(f_flatiter, &vset, &iset, &oset)?;
-    validate::check_initial(&layer, &oset, true)?;
-    check_definition(&f, &layer, &g, &planes)?;
+    common::check_domain(f_flatiter, &vset, &iset, &oset)?;
+    check_def_geom(&f, &g, &planes)?;
+    check_def_layer(&f, &layers, &g)?;
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
+    use maplit::{hashmap, hashset};
     use test_log;
 
     use super::*;
@@ -277,44 +282,37 @@ mod tests {
     fn test_check_definition_ng() {
         // Missing Plane specification
         assert_eq!(
-            check_definition(
-                &map! { 0: set!{1} },
-                &vec![1, 0],
+            check_def_geom(
+                &hashmap! { 0 => hashset!{1} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! {},
+                &hashmap! {},
             ),
             Err(InvalidMeasurementSpec { node: 0 })
         );
         // Violate 0 -> f(0) = 1
         assert_eq!(
-            check_definition(
-                &map! { 0: set!{1} },
-                &vec![0, 0],
+            check_def_layer(
+                &hashmap! { 0 => hashset!{1} },
+                &[0, 0],
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: Plane::XY },
             ),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate 1 in nb(f(0)) = nb(2) => 0 == 1 or 0 -> 1
         assert_eq!(
-            check_definition(
-                &map! { 0: set!{2}, 1: set!{2} },
-                &vec![1, 1, 0],
+            check_def_layer(
+                &hashmap! { 0 => hashset!{2}, 1 => hashset!{2} },
+                &[1, 1, 0],
                 &test_utils::graph(&[(0, 1), (1, 2)]),
-                &map! {
-                    0: Plane::XY,
-                    1: Plane::XY
-                },
             ),
             Err(InconsistentFlowOrder { nodes: (0, 1) })
         );
         // Violate XY: 0 in f(0)
         assert_eq!(
-            check_definition(
-                &map! { 0: set!{0} },
-                &vec![1, 0],
+            check_def_geom(
+                &hashmap! { 0 => hashset!{0} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: Plane::XY },
+                &hashmap! { 0 => Plane::XY },
             ),
             Err(InconsistentFlowPlane {
                 node: 0,
@@ -323,11 +321,10 @@ mod tests {
         );
         // Violate YZ: 0 in Odd(f(0))
         assert_eq!(
-            check_definition(
-                &map! { 0: set!{1} },
-                &vec![1, 0],
+            check_def_geom(
+                &hashmap! { 0 => hashset!{1} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: Plane::YZ },
+                &hashmap! { 0 => Plane::YZ },
             ),
             Err(InconsistentFlowPlane {
                 node: 0,
@@ -336,11 +333,10 @@ mod tests {
         );
         // Violate XZ: 0 not in Odd(f(0)) and in f(0)
         assert_eq!(
-            check_definition(
-                &map! { 0: set!{0} },
-                &vec![1, 0],
+            check_def_geom(
+                &hashmap! { 0 => hashset!{0} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: Plane::XZ },
+                &hashmap! { 0 => Plane::XZ },
             ),
             Err(InconsistentFlowPlane {
                 node: 0,
@@ -349,11 +345,10 @@ mod tests {
         );
         // Violate XZ: 0 in Odd(f(0)) and not in f(0)
         assert_eq!(
-            check_definition(
-                &map! { 0: set!{1} },
-                &vec![1, 0],
+            check_def_geom(
+                &hashmap! { 0 => hashset!{1} },
                 &test_utils::graph(&[(0, 1)]),
-                &map! { 0: Plane::XZ },
+                &hashmap! { 0 => Plane::XZ },
             ),
             Err(InconsistentFlowPlane {
                 node: 0,
@@ -365,98 +360,98 @@ mod tests {
     #[test_log::test]
     fn test_find_case0() {
         let TestCase { g, iset, oset } = test_utils::CASE0.clone();
-        let planes = map! {};
+        let planes = hashmap! {};
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
-        assert_eq!(layer, vec![0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![0, 0]);
+        verify((f, layers), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
     fn test_find_case1() {
         let TestCase { g, iset, oset } = test_utils::CASE1.clone();
-        let planes = map! {
-            0: Plane::XY,
-            1: Plane::XY,
-            2: Plane::XY,
-            3: Plane::XY
+        let planes = hashmap! {
+            0 => Plane::XY,
+            1 => Plane::XY,
+            2 => Plane::XY,
+            3 => Plane::XY
         };
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], Nodes::from([1]));
         assert_eq!(f[&1], Nodes::from([2]));
         assert_eq!(f[&2], Nodes::from([3]));
         assert_eq!(f[&3], Nodes::from([4]));
-        assert_eq!(layer, vec![4, 3, 2, 1, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![4, 3, 2, 1, 0]);
+        verify((f, layers), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
     fn test_find_case2() {
         let TestCase { g, iset, oset } = test_utils::CASE2.clone();
-        let planes = map! {
-            0: Plane::XY,
-            1: Plane::XY,
-            2: Plane::XY,
-            3: Plane::XY
+        let planes = hashmap! {
+            0 => Plane::XY,
+            1 => Plane::XY,
+            2 => Plane::XY,
+            3 => Plane::XY
         };
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], Nodes::from([2]));
         assert_eq!(f[&1], Nodes::from([3]));
         assert_eq!(f[&2], Nodes::from([4]));
         assert_eq!(f[&3], Nodes::from([5]));
-        assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![2, 2, 1, 1, 0, 0]);
+        verify((f, layers), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
     fn test_find_case3() {
         let TestCase { g, iset, oset } = test_utils::CASE3.clone();
-        let planes = map! {
-            0: Plane::XY,
-            1: Plane::XY,
-            2: Plane::XY
+        let planes = hashmap! {
+            0 => Plane::XY,
+            1 => Plane::XY,
+            2 => Plane::XY
         };
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], Nodes::from([4, 5]));
         assert_eq!(f[&1], Nodes::from([3, 4, 5]));
         assert_eq!(f[&2], Nodes::from([3, 5]));
-        assert_eq!(layer, vec![1, 1, 1, 0, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![1, 1, 1, 0, 0, 0]);
+        verify((f, layers), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
     fn test_find_case4() {
         let TestCase { g, iset, oset } = test_utils::CASE4.clone();
-        let planes = map! {
-            0: Plane::XY,
-            1: Plane::XY,
-            2: Plane::XZ,
-            3: Plane::YZ
+        let planes = hashmap! {
+            0 => Plane::XY,
+            1 => Plane::XY,
+            2 => Plane::XZ,
+            3 => Plane::YZ
         };
         let flen = g.len() - oset.len();
-        let (f, layer) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
+        let (f, layers) = find(g.clone(), iset.clone(), oset.clone(), planes.clone()).unwrap();
         assert_eq!(f.len(), flen);
         assert_eq!(f[&0], Nodes::from([2]));
         assert_eq!(f[&1], Nodes::from([5]));
         assert_eq!(f[&2], Nodes::from([2, 4]));
         assert_eq!(f[&3], Nodes::from([3]));
-        assert_eq!(layer, vec![2, 2, 1, 1, 0, 0]);
-        verify((f, layer), g, iset, oset, planes).unwrap();
+        assert_eq!(layers, vec![2, 2, 1, 1, 0, 0]);
+        verify((f, layers), g, iset, oset, planes).unwrap();
     }
 
     #[test_log::test]
     fn test_find_case5() {
         let TestCase { g, iset, oset } = test_utils::CASE5.clone();
-        let planes = map! {
-            0: Plane::XY,
-            1: Plane::XY
+        let planes = hashmap! {
+            0 => Plane::XY,
+            1 => Plane::XY
         };
         assert!(find(g, iset, oset, planes).is_none());
     }
@@ -464,11 +459,11 @@ mod tests {
     #[test_log::test]
     fn test_find_case6() {
         let TestCase { g, iset, oset } = test_utils::CASE6.clone();
-        let planes = map! {
-            0: Plane::XY,
-            1: Plane::XY,
-            2: Plane::XY,
-            3: Plane::XY
+        let planes = hashmap! {
+            0 => Plane::XY,
+            1 => Plane::XY,
+            2 => Plane::XY,
+            3 => Plane::XY
         };
         assert!(find(g, iset, oset, planes).is_none());
     }
@@ -476,11 +471,11 @@ mod tests {
     #[test_log::test]
     fn test_find_case7() {
         let TestCase { g, iset, oset } = test_utils::CASE7.clone();
-        let planes = map! {
-            0: Plane::YZ,
-            1: Plane::XZ,
-            2: Plane::XY,
-            3: Plane::YZ
+        let planes = hashmap! {
+            0 => Plane::YZ,
+            1 => Plane::XZ,
+            2 => Plane::XY,
+            3 => Plane::YZ
         };
         assert!(find(g, iset, oset, planes).is_none());
     }
@@ -488,10 +483,10 @@ mod tests {
     #[test_log::test]
     fn test_find_case8() {
         let TestCase { g, iset, oset } = test_utils::CASE8.clone();
-        let planes = map! {
-            0: Plane::YZ,
-            1: Plane::XZ,
-            2: Plane::XY
+        let planes = hashmap! {
+            0 => Plane::YZ,
+            1 => Plane::XZ,
+            2 => Plane::XY
         };
         assert!(find(g, iset, oset, planes).is_none());
     }

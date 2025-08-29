@@ -4,22 +4,25 @@ use core::{
     hash::Hash,
     ops::{Deref, DerefMut},
 };
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 use fixedbitset::FixedBitSet;
 
-use crate::common::{Graph, Nodes, OrderedNodes};
+use crate::common::{Node, Nodes, OrderedNodes};
 
 /// Computes the odd neighbors of the nodes in `kset`.
-///
-/// # Note
-///
-/// - Naive implementation only for post-verification.
-pub fn odd_neighbors(g: &Graph, kset: &Nodes) -> Nodes {
+pub fn odd_neighbors(g: &[Nodes], kset: &Nodes) -> Nodes {
     assert!(kset.iter().all(|&ki| ki < g.len()), "kset out of range");
-    let mut work = kset.clone();
-    work.extend(kset.iter().flat_map(|&ki| g[ki].iter().copied()));
-    work.retain(|&u| kset.intersection(&g[u]).count() % 2 == 1);
+    let mut work = Nodes::default();
+    for &k in kset {
+        for &u in &g[k] {
+            if work.contains(&u) {
+                work.remove(&u);
+            } else {
+                work.insert(u);
+            }
+        }
+    }
     work
 }
 
@@ -39,7 +42,7 @@ pub trait InPlaceSetDiff<T> {
         U: Deref<Target = T>;
 }
 
-impl<T> InPlaceSetDiff<T> for hashbrown::HashSet<T>
+impl<T> InPlaceSetDiff<T> for HashSet<T>
 where
     T: Eq + Hash,
 {
@@ -78,11 +81,11 @@ pub fn indexmap<T: FromIterator<(usize, usize)>>(set: &OrderedNodes) -> T {
 /// Inserts `u` on construction and reverts on drop.
 pub struct ScopedInclude<'a> {
     target: &'a mut OrderedNodes,
-    u: Option<usize>,
+    u: Option<Node>,
 }
 
 impl<'a> ScopedInclude<'a> {
-    pub fn new(target: &'a mut OrderedNodes, u: usize) -> Self {
+    pub fn new(target: &'a mut OrderedNodes, u: Node) -> Self {
         let u = if target.insert(u) { Some(u) } else { None };
         Self { target, u }
     }
@@ -116,11 +119,11 @@ impl Drop for ScopedInclude<'_> {
 /// Removes `u` on construction and reverts on drop.
 pub struct ScopedExclude<'a> {
     target: &'a mut OrderedNodes,
-    u: Option<usize>,
+    u: Option<Node>,
 }
 
 impl<'a> ScopedExclude<'a> {
-    pub fn new(target: &'a mut OrderedNodes, u: usize) -> Self {
+    pub fn new(target: &'a mut OrderedNodes, u: Node) -> Self {
         let u = if target.remove(&u) { Some(u) } else { None };
         Self { target, u }
     }
@@ -193,9 +196,9 @@ mod tests {
 
     #[test]
     fn test_difference_with_hashset() {
-        let mut set = hashbrown::HashSet::from([1, 2, 3]);
+        let mut set = HashSet::from([1, 2, 3]);
         set.difference_with(&[2, 3, 4]);
-        assert_eq!(set, hashbrown::HashSet::from([1]));
+        assert_eq!(set, HashSet::from([1]));
     }
 
     #[test]

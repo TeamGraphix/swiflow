@@ -187,3 +187,4 @@ cobertura.xml
 docs/build
 !docs/build/.nojekyll
 uv.lock
+lcov.info
